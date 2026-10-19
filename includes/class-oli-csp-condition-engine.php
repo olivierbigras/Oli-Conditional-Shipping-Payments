@@ -15,17 +15,40 @@ defined( 'ABSPATH' ) || exit;
 class Oli_CSP_Condition_Engine {
 
 	/**
-	 * Evaluate a set of conditions (AND logic).
+	 * Evaluate condition groups (OR logic between groups, AND logic within groups).
 	 *
-	 * @param array  $conditions Array of conditions.
+	 * @param array  $condition_groups Array of condition groups.
 	 * @param string $context Context: 'cart' or 'checkout'.
-	 * @return bool True if all conditions match.
+	 * @return bool True if any group matches (OR logic).
 	 */
-	public function evaluate_conditions( $conditions, $context = 'checkout' ) {
+	public function evaluate_condition_groups( $condition_groups, $context = 'checkout' ) {
+		if ( empty( $condition_groups ) || ! is_array( $condition_groups ) ) {
+			return true;
+		}
+
+		// OR logic: at least one group must match.
+		foreach ( $condition_groups as $group ) {
+			if ( $this->evaluate_condition_group( $group, $context ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Evaluate a single condition group (AND logic within group).
+	 *
+	 * @param array  $conditions Array of conditions in the group.
+	 * @param string $context Context: 'cart' or 'checkout'.
+	 * @return bool True if all conditions in group match (AND logic).
+	 */
+	public function evaluate_condition_group( $conditions, $context = 'checkout' ) {
 		if ( empty( $conditions ) || ! is_array( $conditions ) ) {
 			return true;
 		}
 
+		// AND logic: all conditions must match.
 		foreach ( $conditions as $condition ) {
 			if ( ! $this->evaluate_single_condition( $condition, $context ) ) {
 				return false;
@@ -33,6 +56,17 @@ class Oli_CSP_Condition_Engine {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Legacy method for backward compatibility (AND logic only).
+	 *
+	 * @param array  $conditions Array of conditions.
+	 * @param string $context Context: 'cart' or 'checkout'.
+	 * @return bool True if all conditions match.
+	 */
+	public function evaluate_conditions( $conditions, $context = 'checkout' ) {
+		return $this->evaluate_condition_group( $conditions, $context );
 	}
 
 	/**
@@ -156,15 +190,28 @@ class Oli_CSP_Condition_Engine {
 		}
 
 		$product_ids = is_array( $condition['value'] ) ? $condition['value'] : array( $condition['value'] );
+		$operator    = isset( $condition['operator'] ) ? $condition['operator'] : 'in';
 
+		$found = false;
 		foreach ( WC()->cart->get_cart() as $cart_item ) {
 			if ( in_array( (string) $cart_item['product_id'], $product_ids, true ) ||
-				 in_array( (string) $cart_item['variation_id'], $product_ids, true ) ) {
-				return true;
+				in_array( (string) $cart_item['variation_id'], $product_ids, true ) ) {
+				$found = true;
+				break;
 			}
 		}
 
-		return false;
+		// Apply operator.
+		switch ( $operator ) {
+			case 'in':
+			case 'is':
+				return $found;
+			case 'not_in':
+			case 'is_not':
+				return ! $found;
+			default:
+				return $found;
+		}
 	}
 
 	/**
@@ -179,7 +226,9 @@ class Oli_CSP_Condition_Engine {
 		}
 
 		$category_ids = is_array( $condition['value'] ) ? $condition['value'] : array( $condition['value'] );
+		$operator     = isset( $condition['operator'] ) ? $condition['operator'] : 'in';
 
+		$found = false;
 		foreach ( WC()->cart->get_cart() as $cart_item ) {
 			$product_id = $cart_item['product_id'];
 			$terms      = get_the_terms( $product_id, 'product_cat' );
@@ -187,13 +236,24 @@ class Oli_CSP_Condition_Engine {
 			if ( $terms && ! is_wp_error( $terms ) ) {
 				foreach ( $terms as $term ) {
 					if ( in_array( (string) $term->term_id, $category_ids, true ) ) {
-						return true;
+						$found = true;
+						break 2;
 					}
 				}
 			}
 		}
 
-		return false;
+		// Apply operator.
+		switch ( $operator ) {
+			case 'in':
+			case 'is':
+				return $found;
+			case 'not_in':
+			case 'is_not':
+				return ! $found;
+			default:
+				return $found;
+		}
 	}
 
 	/**
@@ -207,8 +267,10 @@ class Oli_CSP_Condition_Engine {
 			return false;
 		}
 
-		$tag_ids = is_array( $condition['value'] ) ? $condition['value'] : array( $condition['value'] );
+		$tag_ids  = is_array( $condition['value'] ) ? $condition['value'] : array( $condition['value'] );
+		$operator = isset( $condition['operator'] ) ? $condition['operator'] : 'in';
 
+		$found = false;
 		foreach ( WC()->cart->get_cart() as $cart_item ) {
 			$product_id = $cart_item['product_id'];
 			$terms      = get_the_terms( $product_id, 'product_tag' );
@@ -216,13 +278,24 @@ class Oli_CSP_Condition_Engine {
 			if ( $terms && ! is_wp_error( $terms ) ) {
 				foreach ( $terms as $term ) {
 					if ( in_array( (string) $term->term_id, $tag_ids, true ) ) {
-						return true;
+						$found = true;
+						break 2;
 					}
 				}
 			}
 		}
 
-		return false;
+		// Apply operator.
+		switch ( $operator ) {
+			case 'in':
+			case 'is':
+				return $found;
+			case 'not_in':
+			case 'is_not':
+				return ! $found;
+			default:
+				return $found;
+		}
 	}
 
 	/**
@@ -237,17 +310,30 @@ class Oli_CSP_Condition_Engine {
 		}
 
 		$shipping_class_ids = is_array( $condition['value'] ) ? $condition['value'] : array( $condition['value'] );
+		$operator           = isset( $condition['operator'] ) ? $condition['operator'] : 'in';
 
+		$found = false;
 		foreach ( WC()->cart->get_cart() as $cart_item ) {
-			$product          = $cart_item['data'];
+			$product           = $cart_item['data'];
 			$shipping_class_id = $product->get_shipping_class_id();
 
 			if ( in_array( (string) $shipping_class_id, $shipping_class_ids, true ) ) {
-				return true;
+				$found = true;
+				break;
 			}
 		}
 
-		return false;
+		// Apply operator.
+		switch ( $operator ) {
+			case 'in':
+			case 'is':
+				return $found;
+			case 'not_in':
+			case 'is_not':
+				return ! $found;
+			default:
+				return $found;
+		}
 	}
 
 	/**
@@ -428,8 +514,8 @@ class Oli_CSP_Condition_Engine {
 			return false;
 		}
 
-		$roles          = is_array( $condition['value'] ) ? $condition['value'] : array( $condition['value'] );
-		$user_roles     = (array) $user->roles;
+		$roles      = is_array( $condition['value'] ) ? $condition['value'] : array( $condition['value'] );
+		$user_roles = (array) $user->roles;
 
 		return ! empty( array_intersect( $user_roles, $roles ) );
 	}
@@ -557,17 +643,77 @@ class Oli_CSP_Condition_Engine {
 
 		switch ( $operator ) {
 			case '>':
+			case 'greater':
 				return $value > $compare_value;
 			case '>=':
+			case 'gte':
 				return $value >= $compare_value;
 			case '<':
+			case 'less':
 				return $value < $compare_value;
 			case '<=':
+			case 'lte':
 				return $value <= $compare_value;
 			case '==':
+			case 'eq':
+			case 'is':
 				return abs( $value - $compare_value ) < 0.01;
 			case '!=':
+			case 'neq':
+			case 'is_not':
 				return abs( $value - $compare_value ) >= 0.01;
+			default:
+				return false;
+		}
+	}
+
+	/**
+	 * Compare value with list operator (in/not in).
+	 *
+	 * @param mixed $value Current value.
+	 * @param array $condition Condition configuration.
+	 * @return bool
+	 */
+	private function compare_list_value( $value, $condition ) {
+		$compare_values = isset( $condition['value'] ) ? (array) $condition['value'] : array();
+		$operator       = isset( $condition['operator'] ) ? $condition['operator'] : 'in';
+
+		$is_in_list = in_array( $value, $compare_values, true );
+
+		switch ( $operator ) {
+			case 'in':
+			case 'is':
+				return $is_in_list;
+			case 'not_in':
+			case 'is_not':
+				return ! $is_in_list;
+			default:
+				return false;
+		}
+	}
+
+	/**
+	 * Compare string value with operator (contains/not contains).
+	 *
+	 * @param string $value Current value.
+	 * @param array  $condition Condition configuration.
+	 * @return bool
+	 */
+	private function compare_string_value( $value, $condition ) {
+		$compare_value = isset( $condition['value'] ) ? (string) $condition['value'] : '';
+		$operator      = isset( $condition['operator'] ) ? $condition['operator'] : 'contains';
+
+		switch ( $operator ) {
+			case 'contains':
+				return false !== stripos( $value, $compare_value );
+			case 'not_contains':
+				return false === stripos( $value, $compare_value );
+			case 'is':
+			case '==':
+				return strtolower( $value ) === strtolower( $compare_value );
+			case 'is_not':
+			case '!=':
+				return strtolower( $value ) !== strtolower( $compare_value );
 			default:
 				return false;
 		}

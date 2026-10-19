@@ -179,6 +179,11 @@ class Oli_CSP_Admin_Product {
 	 * @param int $post_id Product ID.
 	 */
 	public function save_product_restrictions( $post_id ) {
+		// Verify nonce - WooCommerce handles this in woocommerce_process_product_meta action.
+		if ( ! isset( $_POST['woocommerce_meta_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['woocommerce_meta_nonce'] ) ), 'woocommerce_save_data' ) ) {
+			return;
+		}
+
 		if ( ! isset( $_POST['_oli_csp_restrictions'] ) ) {
 			delete_post_meta( $post_id, '_oli_csp_restrictions' );
 			return;

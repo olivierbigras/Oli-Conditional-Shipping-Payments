@@ -302,13 +302,18 @@ class Oli_CSP_Admin_Settings {
 			return;
 		}
 
+		// Verify nonce.
+		if ( ! isset( $_POST['_wpnonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ), 'woocommerce-settings' ) ) {
+			return;
+		}
+
 		// Save general settings.
 		if ( isset( $_POST['oli_csp_settings'] ) ) {
 			$settings = array();
-			
-			$settings['debug_mode']                 = isset( $_POST['oli_csp_settings']['debug_mode'] ) ? 'yes' : 'no';
-			$settings['show_excluded_as_disabled']  = isset( $_POST['oli_csp_settings']['show_excluded_as_disabled'] ) ? 'yes' : 'no';
-			$settings['restriction_notice_cart']    = isset( $_POST['oli_csp_settings']['restriction_notice_cart'] ) ? sanitize_textarea_field( wp_unslash( $_POST['oli_csp_settings']['restriction_notice_cart'] ) ) : '';
+
+			$settings['debug_mode']                  = isset( $_POST['oli_csp_settings']['debug_mode'] ) ? 'yes' : 'no';
+			$settings['show_excluded_as_disabled']   = isset( $_POST['oli_csp_settings']['show_excluded_as_disabled'] ) ? 'yes' : 'no';
+			$settings['restriction_notice_cart']     = isset( $_POST['oli_csp_settings']['restriction_notice_cart'] ) ? sanitize_textarea_field( wp_unslash( $_POST['oli_csp_settings']['restriction_notice_cart'] ) ) : '';
 			$settings['restriction_notice_checkout'] = isset( $_POST['oli_csp_settings']['restriction_notice_checkout'] ) ? sanitize_textarea_field( wp_unslash( $_POST['oli_csp_settings']['restriction_notice_checkout'] ) ) : '';
 
 			update_option( 'oli_csp_settings', $settings );
@@ -349,7 +354,16 @@ class Oli_CSP_Admin_Settings {
 		}
 
 		if ( empty( $_FILES['oli_csp_import_file']['tmp_name'] ) ) {
-			wp_safe_redirect( add_query_arg( array( 'page' => 'wc-settings', 'tab' => 'restrictions', 'error' => 'no_file' ), admin_url( 'admin.php' ) ) );
+			wp_safe_redirect(
+				add_query_arg(
+					array(
+						'page'  => 'wc-settings',
+						'tab'   => 'restrictions',
+						'error' => 'no_file',
+					),
+					admin_url( 'admin.php' )
+				)
+			);
 			exit;
 		}
 
@@ -357,13 +371,31 @@ class Oli_CSP_Admin_Settings {
 		$restrictions = Oli_CSP_Utils::import_from_json( $file_content );
 
 		if ( is_wp_error( $restrictions ) ) {
-			wp_safe_redirect( add_query_arg( array( 'page' => 'wc-settings', 'tab' => 'restrictions', 'error' => 'invalid_json' ), admin_url( 'admin.php' ) ) );
+			wp_safe_redirect(
+				add_query_arg(
+					array(
+						'page'  => 'wc-settings',
+						'tab'   => 'restrictions',
+						'error' => 'invalid_json',
+					),
+					admin_url( 'admin.php' )
+				)
+			);
 			exit;
 		}
 
 		update_option( 'oli_csp_global_restrictions', $restrictions );
 
-		wp_safe_redirect( add_query_arg( array( 'page' => 'wc-settings', 'tab' => 'restrictions', 'imported' => '1' ), admin_url( 'admin.php' ) ) );
+		wp_safe_redirect(
+			add_query_arg(
+				array(
+					'page'     => 'wc-settings',
+					'tab'      => 'restrictions',
+					'imported' => '1',
+				),
+				admin_url( 'admin.php' )
+			)
+		);
 		exit;
 	}
 
@@ -382,7 +414,16 @@ class Oli_CSP_Admin_Settings {
 		// Store report in transient for display.
 		set_transient( 'oli_csp_import_report', $report, 60 );
 
-		wp_safe_redirect( add_query_arg( array( 'page' => 'wc-settings', 'tab' => 'restrictions', 'import_report' => '1' ), admin_url( 'admin.php' ) ) );
+		wp_safe_redirect(
+			add_query_arg(
+				array(
+					'page'          => 'wc-settings',
+					'tab'           => 'restrictions',
+					'import_report' => '1',
+				),
+				admin_url( 'admin.php' )
+			)
+		);
 		exit;
 	}
 }

@@ -3,7 +3,7 @@
  * Plugin Name: Oli Conditional Shipping and Payments for WooCommerce
  * Plugin URI: https://olivierbigras.com/
  * Description: Restrict shipping methods, payment gateways, and shipping destinations based on conditional rules. Supports classic and block checkout, HPOS, and multicurrency.
- * Version: 0.1.0
+ * Version: 0.1.1
  * Author: Olivier Bigras
  * Author URI: https://olivierbigras.com/
  * License: GPL v2 or later
@@ -22,7 +22,7 @@
 defined( 'ABSPATH' ) || exit;
 
 // Define plugin constants.
-define( 'OLI_CSP_VERSION', '0.1.0' );
+define( 'OLI_CSP_VERSION', '0.1.1' );
 define( 'OLI_CSP_FILE', __FILE__ );
 define( 'OLI_CSP_PATH', plugin_dir_path( __FILE__ ) );
 define( 'OLI_CSP_URL', plugin_dir_url( __FILE__ ) );
@@ -226,9 +226,9 @@ function oli_csp_activate() {
 		update_option(
 			'oli_csp_settings',
 			array(
-				'debug_mode'                 => 'no',
-				'show_excluded_as_disabled'  => 'no',
-				'restriction_notice_cart'    => __( 'Some shipping methods or payment gateways are not available based on your cart contents.', 'oli-conditional-shipping-payments' ),
+				'debug_mode'                  => 'no',
+				'show_excluded_as_disabled'   => 'no',
+				'restriction_notice_cart'     => __( 'Some shipping methods or payment gateways are not available based on your cart contents.', 'oli-conditional-shipping-payments' ),
 				'restriction_notice_checkout' => __( 'Some shipping methods or payment gateways are not available based on your cart contents.', 'oli-conditional-shipping-payments' ),
 			)
 		);

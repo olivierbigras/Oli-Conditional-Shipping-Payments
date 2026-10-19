@@ -38,7 +38,7 @@ class Oli_CSP_Store_API_Integration {
 	/**
 	 * Validate restrictions on Store API checkout.
 	 *
-	 * @param WC_Order       $order Order object.
+	 * @param WC_Order        $order Order object.
 	 * @param WP_REST_Request $request Request object.
 	 * @throws Exception If restrictions are violated.
 	 */
@@ -65,7 +65,7 @@ class Oli_CSP_Store_API_Integration {
 			return;
 		}
 
-		$handler = oli_csp()->restriction_handler;
+		$handler          = oli_csp()->restriction_handler;
 		$excluded_methods = $handler->get_excluded_shipping_methods();
 
 		if ( empty( $excluded_methods ) ) {
@@ -73,9 +73,9 @@ class Oli_CSP_Store_API_Integration {
 		}
 
 		foreach ( $shipping_methods as $shipping_method ) {
-			$method_id = $shipping_method->get_method_id();
+			$method_id   = $shipping_method->get_method_id();
 			$instance_id = $shipping_method->get_instance_id();
-			$full_id = $method_id . ':' . $instance_id;
+			$full_id     = $method_id . ':' . $instance_id;
 
 			if ( in_array( $method_id, $excluded_methods, true ) || in_array( $full_id, $excluded_methods, true ) ) {
 				throw new Exception(
@@ -97,7 +97,7 @@ class Oli_CSP_Store_API_Integration {
 			return;
 		}
 
-		$handler = oli_csp()->restriction_handler;
+		$handler           = oli_csp()->restriction_handler;
 		$excluded_gateways = $handler->get_excluded_payment_gateways();
 
 		if ( empty( $excluded_gateways ) ) {
@@ -159,7 +159,7 @@ class Oli_CSP_Store_API_Integration {
 		// Product-specific restrictions.
 		if ( WC()->cart ) {
 			foreach ( WC()->cart->get_cart() as $cart_item ) {
-				$product_id = $cart_item['product_id'];
+				$product_id           = $cart_item['product_id'];
 				$product_restrictions = get_post_meta( $product_id, '_oli_csp_restrictions', true );
 
 				if ( ! empty( $product_restrictions['shipping_destinations'] ) ) {

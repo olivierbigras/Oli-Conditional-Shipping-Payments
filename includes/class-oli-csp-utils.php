@@ -51,12 +51,12 @@ class Oli_CSP_Utils {
 	 */
 	public static function get_numeric_operators() {
 		return array(
-			'>='  => __( 'Greater than or equal to', 'oli-conditional-shipping-payments' ),
-			'>'   => __( 'Greater than', 'oli-conditional-shipping-payments' ),
-			'<='  => __( 'Less than or equal to', 'oli-conditional-shipping-payments' ),
-			'<'   => __( 'Less than', 'oli-conditional-shipping-payments' ),
-			'=='  => __( 'Equal to', 'oli-conditional-shipping-payments' ),
-			'!='  => __( 'Not equal to', 'oli-conditional-shipping-payments' ),
+			'>=' => __( 'Greater than or equal to', 'oli-conditional-shipping-payments' ),
+			'>'  => __( 'Greater than', 'oli-conditional-shipping-payments' ),
+			'<=' => __( 'Less than or equal to', 'oli-conditional-shipping-payments' ),
+			'<'  => __( 'Less than', 'oli-conditional-shipping-payments' ),
+			'==' => __( 'Equal to', 'oli-conditional-shipping-payments' ),
+			'!=' => __( 'Not equal to', 'oli-conditional-shipping-payments' ),
 		);
 	}
 
@@ -74,7 +74,7 @@ class Oli_CSP_Utils {
 		$sanitized = array();
 
 		foreach ( $data as $type => $restrictions ) {
-			$type = sanitize_key( $type );
+			$type               = sanitize_key( $type );
 			$sanitized[ $type ] = array();
 
 			if ( ! is_array( $restrictions ) ) {

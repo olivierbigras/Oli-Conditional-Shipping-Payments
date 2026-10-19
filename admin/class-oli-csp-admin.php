@@ -74,11 +74,11 @@ class Oli_CSP_Admin {
 				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
 				'nonce'   => wp_create_nonce( 'oli_csp_admin' ),
 				'i18n'    => array(
-					'addCondition' => __( 'Add Condition', 'oli-conditional-shipping-payments' ),
+					'addCondition'    => __( 'Add Condition', 'oli-conditional-shipping-payments' ),
 					'removeCondition' => __( 'Remove Condition', 'oli-conditional-shipping-payments' ),
-					'addRule' => __( 'Add Rule', 'oli-conditional-shipping-payments' ),
-					'removeRule' => __( 'Remove Rule', 'oli-conditional-shipping-payments' ),
-					'confirmDelete' => __( 'Are you sure you want to delete this restriction?', 'oli-conditional-shipping-payments' ),
+					'addRule'         => __( 'Add Rule', 'oli-conditional-shipping-payments' ),
+					'removeRule'      => __( 'Remove Rule', 'oli-conditional-shipping-payments' ),
+					'confirmDelete'   => __( 'Are you sure you want to delete this restriction?', 'oli-conditional-shipping-payments' ),
 				),
 			)
 		);

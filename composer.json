@@ -1,6 +1,6 @@
 {
-  "name": "oli-conditional-shipping-payments",
-  "version": "0.1.0",
+  "name": "bigrat95/oli-conditional-shipping-payments",
+  "version": "0.1.1",
   "description": "Oli Conditional Shipping and Payments for WooCommerce",
   "scripts": {
     "test": "phpunit",
@@ -14,5 +14,10 @@
     "phpunit/phpunit": "^9.5"
   },
   "license": "GPL-2.0-or-later",
-  "author": "Olivier Bigras <contact@olivierbigras.com>"
+  "author": "Olivier Bigras <contact@olivierbigras.com>",
+  "config": {
+    "allow-plugins": {
+      "dealerdirect/phpcodesniffer-composer-installer": true
+    }
+  }
 }

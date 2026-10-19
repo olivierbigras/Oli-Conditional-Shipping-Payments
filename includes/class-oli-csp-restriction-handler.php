@@ -60,7 +60,27 @@ class Oli_CSP_Restriction_Handler {
 		$excluded_methods = array();
 
 		foreach ( $restrictions as $restriction ) {
-			if ( empty( $restriction['conditions'] ) || $this->condition_engine->evaluate_conditions( $restriction['conditions'], 'checkout' ) ) {
+			$conditions_match = false;
+
+			// Check if conditions match (support both old format and new grouped format).
+			if ( ! empty( $restriction['condition_groups'] ) ) {
+				$conditions_match = $this->condition_engine->evaluate_condition_groups( $restriction['condition_groups'], 'checkout' );
+			} elseif ( ! empty( $restriction['conditions'] ) ) {
+				$conditions_match = $this->condition_engine->evaluate_conditions( $restriction['conditions'], 'checkout' );
+			} else {
+				// No conditions means always apply.
+				$conditions_match = true;
+			}
+
+			if ( $conditions_match ) {
+				// Check zone-specific restrictions.
+				if ( ! empty( $restriction['zones'] ) ) {
+					$current_zone_id = $this->get_package_zone_id( $package );
+					if ( ! in_array( $current_zone_id, $restriction['zones'], true ) ) {
+						continue;
+					}
+				}
+
 				if ( ! empty( $restriction['excluded_methods'] ) ) {
 					$excluded_methods = array_merge( $excluded_methods, $restriction['excluded_methods'] );
 				}
@@ -71,17 +91,22 @@ class Oli_CSP_Restriction_Handler {
 			return $rates;
 		}
 
-		$settings = get_option( 'oli_csp_settings', array() );
+		$settings      = get_option( 'oli_csp_settings', array() );
 		$show_disabled = isset( $settings['show_excluded_as_disabled'] ) && 'yes' === $settings['show_excluded_as_disabled'];
 
 		foreach ( $rates as $rate_id => $rate ) {
-			$method_id = $rate->get_method_id();
+			$method_id   = $rate->get_method_id();
+			$instance_id = $rate->get_instance_id();
 
-			// Check if method or instance is excluded.
-			if ( in_array( $method_id, $excluded_methods, true ) || in_array( $rate_id, $excluded_methods, true ) ) {
+			// Check if method, instance, or full rate ID is excluded.
+			$is_excluded = in_array( $method_id, $excluded_methods, true ) ||
+							in_array( $rate_id, $excluded_methods, true ) ||
+							in_array( $method_id . ':' . $instance_id, $excluded_methods, true );
+
+			if ( $is_excluded ) {
 				if ( $show_disabled ) {
 					$rates[ $rate_id ]->label .= ' ' . __( '(Not available)', 'oli-conditional-shipping-payments' );
-					$rates[ $rate_id ]->cost  = '';
+					$rates[ $rate_id ]->cost   = '';
 				} else {
 					unset( $rates[ $rate_id ] );
 				}
@@ -110,7 +135,18 @@ class Oli_CSP_Restriction_Handler {
 		$excluded_gateways = array();
 
 		foreach ( $restrictions as $restriction ) {
-			if ( empty( $restriction['conditions'] ) || $this->condition_engine->evaluate_conditions( $restriction['conditions'], 'checkout' ) ) {
+			$conditions_match = false;
+
+			// Check if conditions match (support both old format and new grouped format).
+			if ( ! empty( $restriction['condition_groups'] ) ) {
+				$conditions_match = $this->condition_engine->evaluate_condition_groups( $restriction['condition_groups'], 'checkout' );
+			} elseif ( ! empty( $restriction['conditions'] ) ) {
+				$conditions_match = $this->condition_engine->evaluate_conditions( $restriction['conditions'], 'checkout' );
+			} else {
+				$conditions_match = true;
+			}
+
+			if ( $conditions_match ) {
 				if ( ! empty( $restriction['excluded_gateways'] ) ) {
 					$excluded_gateways = array_merge( $excluded_gateways, $restriction['excluded_gateways'] );
 				}
@@ -189,7 +225,7 @@ class Oli_CSP_Restriction_Handler {
 		// Product-specific restrictions.
 		if ( WC()->cart ) {
 			foreach ( WC()->cart->get_cart() as $cart_item ) {
-				$product_id = $cart_item['product_id'];
+				$product_id           = $cart_item['product_id'];
 				$product_restrictions = get_post_meta( $product_id, '_oli_csp_restrictions', true );
 
 				if ( ! empty( $product_restrictions[ $type ] ) ) {
@@ -241,7 +277,17 @@ class Oli_CSP_Restriction_Handler {
 			$restrictions = $this->get_applicable_restrictions( $type );
 			if ( ! empty( $restrictions ) ) {
 				foreach ( $restrictions as $restriction ) {
-					if ( empty( $restriction['conditions'] ) || $this->condition_engine->evaluate_conditions( $restriction['conditions'], 'checkout' ) ) {
+					$conditions_match = false;
+
+					if ( ! empty( $restriction['condition_groups'] ) ) {
+						$conditions_match = $this->condition_engine->evaluate_condition_groups( $restriction['condition_groups'], 'checkout' );
+					} elseif ( ! empty( $restriction['conditions'] ) ) {
+						$conditions_match = $this->condition_engine->evaluate_conditions( $restriction['conditions'], 'checkout' );
+					} else {
+						$conditions_match = true;
+					}
+
+					if ( $conditions_match ) {
 						return true;
 					}
 				}
@@ -265,7 +311,17 @@ class Oli_CSP_Restriction_Handler {
 		$excluded_methods = array();
 
 		foreach ( $restrictions as $restriction ) {
-			if ( empty( $restriction['conditions'] ) || $this->condition_engine->evaluate_conditions( $restriction['conditions'], 'checkout' ) ) {
+			$conditions_match = false;
+
+			if ( ! empty( $restriction['condition_groups'] ) ) {
+				$conditions_match = $this->condition_engine->evaluate_condition_groups( $restriction['condition_groups'], 'checkout' );
+			} elseif ( ! empty( $restriction['conditions'] ) ) {
+				$conditions_match = $this->condition_engine->evaluate_conditions( $restriction['conditions'], 'checkout' );
+			} else {
+				$conditions_match = true;
+			}
+
+			if ( $conditions_match ) {
 				if ( ! empty( $restriction['excluded_methods'] ) ) {
 					$excluded_methods = array_merge( $excluded_methods, $restriction['excluded_methods'] );
 				}
@@ -289,7 +345,17 @@ class Oli_CSP_Restriction_Handler {
 		$excluded_gateways = array();
 
 		foreach ( $restrictions as $restriction ) {
-			if ( empty( $restriction['conditions'] ) || $this->condition_engine->evaluate_conditions( $restriction['conditions'], 'checkout' ) ) {
+			$conditions_match = false;
+
+			if ( ! empty( $restriction['condition_groups'] ) ) {
+				$conditions_match = $this->condition_engine->evaluate_condition_groups( $restriction['condition_groups'], 'checkout' );
+			} elseif ( ! empty( $restriction['conditions'] ) ) {
+				$conditions_match = $this->condition_engine->evaluate_conditions( $restriction['conditions'], 'checkout' );
+			} else {
+				$conditions_match = true;
+			}
+
+			if ( $conditions_match ) {
 				if ( ! empty( $restriction['excluded_gateways'] ) ) {
 					$excluded_gateways = array_merge( $excluded_gateways, $restriction['excluded_gateways'] );
 				}
@@ -297,5 +363,16 @@ class Oli_CSP_Restriction_Handler {
 		}
 
 		return array_unique( $excluded_gateways );
+	}
+
+	/**
+	 * Get package zone ID.
+	 *
+	 * @param array $package Package data.
+	 * @return int Zone ID.
+	 */
+	private function get_package_zone_id( $package ) {
+		$zone = wc_get_shipping_zone( $package );
+		return $zone ? $zone->get_id() : 0;
 	}
 }

@@ -1,0 +1,49 @@
+# Oli Conditional Shipping and Payments for WooCommerce
+
+.DS_Store
+Thumbs.db
+
+# IDE
+/.vscode
+/.idea
+*.sublime-project
+*.sublime-workspace
+
+# Composer
+/vendor/
+composer.lock
+
+# Node
+/node_modules/
+package-lock.json
+yarn.lock
+
+# Build
+/build/
+/dist/
+
+# Tests
+/tests/wordpress/
+/tests/wordpress-tests-lib/
+/tmp/
+.phpunit.result.cache
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# WordPress
+wp-config.php
+wp-content/uploads/
+wp-content/backup-db/
+wp-content/advanced-cache.php
+wp-content/wp-cache-config.php
+wp-content/cache/
+wp-content/backups/
+
+# Deploy
+/releases/
+*.zip
+!assets/*.zip

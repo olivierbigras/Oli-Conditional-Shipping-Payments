@@ -11,6 +11,11 @@ if ( ! $_tests_dir ) {
 	$_tests_dir = rtrim( sys_get_temp_dir(), '/\\' ) . '/wordpress-tests-lib';
 }
 
+$oli_csp_autoload = dirname( __DIR__ ) . '/vendor/autoload.php';
+if ( file_exists( $oli_csp_autoload ) ) {
+	require_once $oli_csp_autoload;
+}
+
 if ( ! file_exists( $_tests_dir . '/includes/functions.php' ) ) {
 	echo "Could not find {$_tests_dir}/includes/functions.php\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 	exit( 1 );

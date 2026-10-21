@@ -26,13 +26,17 @@ download() {
 	fi
 }
 
+if [ "$WP_VERSION" = "latest" ]; then
+	WP_VERSION=$(curl -fsSL https://api.wordpress.org/core/version-check/1.7/ | python3 -c "import sys,json; print(json.load(sys.stdin)['offers'][0]['version'])")
+fi
+
 if [[ $WP_VERSION =~ ^[0-9]+\.[0-9]+$ ]]; then
 	WP_TESTS_TAG="branches/$WP_VERSION"
 	WP_GIT_REF="$WP_VERSION"
 elif [[ $WP_VERSION =~ [0-9]+\.[0-9]+\.[0-9]+ ]]; then
 	WP_TESTS_TAG="tags/$WP_VERSION"
 	WP_GIT_REF="$WP_VERSION"
-elif [[ $WP_VERSION == 'nightly' || $WP_VERSION == 'trunk' || $WP_VERSION == 'latest' ]]; then
+elif [[ $WP_VERSION == 'nightly' || $WP_VERSION == 'trunk' ]]; then
 	WP_TESTS_TAG="trunk"
 	WP_GIT_REF="trunk"
 else
@@ -55,11 +59,7 @@ install_wp() {
 		unzip -q /tmp/wordpress-nightly/wordpress-nightly.zip -d /tmp/wordpress-nightly/
 		mv /tmp/wordpress-nightly/wordpress/* "$WP_CORE_DIR"
 	else
-		if [ "$WP_VERSION" = "latest" ]; then
-			local ARCHIVE_NAME='latest'
-		else
-			local ARCHIVE_NAME="wordpress-$WP_VERSION"
-		fi
+		local ARCHIVE_NAME="wordpress-$WP_VERSION"
 		download "https://wordpress.org/${ARCHIVE_NAME}.tar.gz" /tmp/wordpress.tar.gz
 		tar --strip-components=1 -zxmf /tmp/wordpress.tar.gz -C "$WP_CORE_DIR"
 	fi

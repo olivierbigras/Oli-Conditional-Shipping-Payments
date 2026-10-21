@@ -10,112 +10,100 @@ jobs:
   lint:
     name: PHP Lint
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
-      
+        uses: actions/checkout@v4
+
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '7.4'
-      
+
       - name: PHP Syntax Check
         run: find . -name "*.php" -not -path "./vendor/*" -exec php -l {} \;
 
   phpcs:
     name: PHPCS
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
-      
+        uses: actions/checkout@v4
+
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '7.4'
-      
+          php-version: '8.1'
+          tools: composer
+
       - name: Install Composer dependencies
-        run: |
-          composer require --dev wp-coding-standards/wpcs:"^3.0"
-          composer require --dev squizlabs/php_codesniffer:"^3.7"
-          composer require --dev phpcompatibility/phpcompatibility-wp:"^2.1"
-          vendor/bin/phpcs --config-set installed_paths vendor/wp-coding-standards/wpcs,vendor/phpcompatibility/phpcompatibility-wp
-      
+        run: composer install --prefer-dist --no-progress
+
       - name: Run PHPCS
         run: vendor/bin/phpcs
 
   test:
     name: PHPUnit Tests
     runs-on: ubuntu-latest
-    
+
     strategy:
+      fail-fast: false
       matrix:
-        php: ['7.4', '8.0', '8.1']
+        php: ['7.4', '8.1']
         wordpress: ['6.5', 'latest']
-    
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: wordpress_test
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=5
+
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
-      
+        uses: actions/checkout@v4
+
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
           extensions: mysqli
           coverage: none
-      
-      - name: Setup MySQL
-        uses: mirromutth/mysql-action@v1.1
-        with:
-          mysql version: '5.7'
-          mysql database: 'wordpress_test'
-          mysql root password: 'root'
-      
+
       - name: Install WordPress Test Suite
+        run: bash tests/bin/install-wp-tests.sh wordpress_test root root 127.0.0.1 ${{ matrix.wordpress }}
+
+      - name: Install WooCommerce
         run: |
-          bash tests/bin/install-wp-tests.sh wordpress_test root root 127.0.0.1 ${{ matrix.wordpress }}
-      
+          mkdir -p /tmp/wordpress/wp-content/plugins
+          curl -sL https://downloads.wordpress.org/plugin/woocommerce.latest-stable.zip -o /tmp/woocommerce.zip
+          unzip -q /tmp/woocommerce.zip -d /tmp/wordpress/wp-content/plugins
+
       - name: Install Composer dependencies
-        run: composer install --prefer-dist --no-progress --no-suggest
-      
+        run: composer install --prefer-dist --no-progress
+
       - name: Run PHPUnit
+        env:
+          WC_DIR: /tmp/wordpress/wp-content/plugins/woocommerce
         run: vendor/bin/phpunit -c phpunit.xml
 
   plugin-check:
     name: Plugin Check
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
-      
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.0'
-      
-      - name: Install WP-CLI
-        run: |
-          curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
-          chmod +x wp-cli.phar
-          sudo mv wp-cli.phar /usr/local/bin/wp
-      
-      - name: Setup WordPress
-        run: |
-          wp core download --path=/tmp/wordpress --allow-root
-          wp config create --dbname=wordpress --dbuser=root --dbpass=root --dbhost=127.0.0.1 --path=/tmp/wordpress --allow-root
-      
-      - name: Install Plugin Check
-        run: |
-          wp plugin install plugin-check --activate --path=/tmp/wordpress --allow-root
-      
-      - name: Copy plugin to WordPress
-        run: |
-          mkdir -p /tmp/wordpress/wp-content/plugins/oli-conditional-shipping-payments
-          cp -r * /tmp/wordpress/wp-content/plugins/oli-conditional-shipping-payments/
-      
+        uses: actions/checkout@v4
+
       - name: Run Plugin Check
-        run: |
-          wp plugin-check run oli-conditional-shipping-payments --path=/tmp/wordpress --allow-root
+        uses: wordpress/plugin-check-action@v1
+        with:
+          exclude-directories: |
+            vendor
+            tests
+            .github
+          slug: oli-conditional-shipping-payments

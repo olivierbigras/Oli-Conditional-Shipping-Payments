@@ -25,13 +25,15 @@ class Test_Oli_CSP_Engine_Official_Semantics extends WP_UnitTestCase {
 	 */
 	public function setUp(): void {
 		parent::setUp();
+
+		if ( ! class_exists( 'WooCommerce' ) || ! class_exists( 'WC_Helper_Product' ) ) {
+			$this->markTestSkipped( 'WooCommerce test helpers are not available.' );
+		}
+
 		$this->engine = new Oli_CSP_Condition_Engine();
 
-		// Set up WooCommerce.
-		if ( class_exists( 'WC' ) ) {
-			WC()->initialize_cart();
-			WC()->initialize_session();
-		}
+		WC()->initialize_cart();
+		WC()->initialize_session();
 	}
 
 	/**

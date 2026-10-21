@@ -87,6 +87,7 @@ install_test_suite() {
 	WP_CORE_DIR=$(echo "$WP_CORE_DIR" | sed 's:/\+$::')
 	sed -i "s:dirname( __FILE__ ) . '/src/':'$WP_CORE_DIR/':" "$WP_TESTS_DIR/wp-tests-config.php"
 	sed -i "s:dirname( __FILE__ ) . '/public/':'$WP_CORE_DIR/':" "$WP_TESTS_DIR/wp-tests-config.php"
+	sed -i "s:__DIR__ . '/src/':'$WP_CORE_DIR/':" "$WP_TESTS_DIR/wp-tests-config.php"
 	sed -i "s/youremptytestdbnamehere/$DB_NAME/" "$WP_TESTS_DIR/wp-tests-config.php"
 	sed -i "s/yourusernamehere/$DB_USER/" "$WP_TESTS_DIR/wp-tests-config.php"
 	sed -i "s/yourpasswordhere/$DB_PASS/" "$WP_TESTS_DIR/wp-tests-config.php"
@@ -98,7 +99,7 @@ install_db() {
 		return 0
 	fi
 
-	mysqladmin create "$DB_NAME" --user="$DB_USER" --password="$DB_PASS" --host="$DB_HOST" --protocol=tcp
+	mysqladmin create "$DB_NAME" --user="$DB_USER" --password="$DB_PASS" --host="$DB_HOST" --protocol=tcp || true
 }
 
 install_wp

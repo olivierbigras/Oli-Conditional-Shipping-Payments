@@ -90,9 +90,6 @@ class Oli_CSP_Plugin {
 			return;
 		}
 
-		// Load text domain.
-		load_plugin_textdomain( 'oli-conditional-shipping-payments', false, dirname( OLI_CSP_BASENAME ) . '/languages' );
-
 		// Include core files.
 		$this->includes();
 

@@ -60,23 +60,12 @@ class Oli_CSP_Restriction_Handler {
 		$excluded_methods = array();
 
 		foreach ( $restrictions as $restriction ) {
-			$conditions_match = false;
-
-			// Check if conditions match (support both old format and new grouped format).
-			if ( ! empty( $restriction['condition_groups'] ) ) {
-				$conditions_match = $this->condition_engine->evaluate_condition_groups( $restriction['condition_groups'], 'checkout' );
-			} elseif ( ! empty( $restriction['conditions'] ) ) {
-				$conditions_match = $this->condition_engine->evaluate_conditions( $restriction['conditions'], 'checkout' );
-			} else {
-				// No conditions means always apply.
-				$conditions_match = true;
-			}
-
-			if ( $conditions_match ) {
+			if ( $this->restriction_matches( $restriction ) ) {
 				// Check zone-specific restrictions.
 				if ( ! empty( $restriction['zones'] ) ) {
-					$current_zone_id = $this->get_package_zone_id( $package );
-					if ( ! in_array( $current_zone_id, $restriction['zones'], true ) ) {
+					$current_zone_id = (int) $this->get_package_zone_id( $package );
+					$zone_ids        = array_map( 'absint', (array) $restriction['zones'] );
+					if ( ! in_array( $current_zone_id, $zone_ids, true ) ) {
 						continue;
 					}
 				}
@@ -135,18 +124,7 @@ class Oli_CSP_Restriction_Handler {
 		$excluded_gateways = array();
 
 		foreach ( $restrictions as $restriction ) {
-			$conditions_match = false;
-
-			// Check if conditions match (support both old format and new grouped format).
-			if ( ! empty( $restriction['condition_groups'] ) ) {
-				$conditions_match = $this->condition_engine->evaluate_condition_groups( $restriction['condition_groups'], 'checkout' );
-			} elseif ( ! empty( $restriction['conditions'] ) ) {
-				$conditions_match = $this->condition_engine->evaluate_conditions( $restriction['conditions'], 'checkout' );
-			} else {
-				$conditions_match = true;
-			}
-
-			if ( $conditions_match ) {
+			if ( $this->restriction_matches( $restriction ) ) {
 				if ( ! empty( $restriction['excluded_gateways'] ) ) {
 					$excluded_gateways = array_merge( $excluded_gateways, $restriction['excluded_gateways'] );
 				}
@@ -179,10 +157,8 @@ class Oli_CSP_Restriction_Handler {
 		$excluded_countries = array();
 
 		foreach ( $restrictions as $restriction ) {
-			if ( empty( $restriction['conditions'] ) || $this->condition_engine->evaluate_conditions( $restriction['conditions'], 'checkout' ) ) {
-				if ( ! empty( $restriction['excluded_countries'] ) ) {
-					$excluded_countries = array_merge( $excluded_countries, $restriction['excluded_countries'] );
-				}
+			if ( $this->restriction_matches( $restriction ) && ! empty( $restriction['excluded_countries'] ) ) {
+				$excluded_countries = array_merge( $excluded_countries, $restriction['excluded_countries'] );
 			}
 		}
 
@@ -277,17 +253,7 @@ class Oli_CSP_Restriction_Handler {
 			$restrictions = $this->get_applicable_restrictions( $type );
 			if ( ! empty( $restrictions ) ) {
 				foreach ( $restrictions as $restriction ) {
-					$conditions_match = false;
-
-					if ( ! empty( $restriction['condition_groups'] ) ) {
-						$conditions_match = $this->condition_engine->evaluate_condition_groups( $restriction['condition_groups'], 'checkout' );
-					} elseif ( ! empty( $restriction['conditions'] ) ) {
-						$conditions_match = $this->condition_engine->evaluate_conditions( $restriction['conditions'], 'checkout' );
-					} else {
-						$conditions_match = true;
-					}
-
-					if ( $conditions_match ) {
+					if ( $this->restriction_matches( $restriction ) ) {
 						return true;
 					}
 				}
@@ -311,20 +277,8 @@ class Oli_CSP_Restriction_Handler {
 		$excluded_methods = array();
 
 		foreach ( $restrictions as $restriction ) {
-			$conditions_match = false;
-
-			if ( ! empty( $restriction['condition_groups'] ) ) {
-				$conditions_match = $this->condition_engine->evaluate_condition_groups( $restriction['condition_groups'], 'checkout' );
-			} elseif ( ! empty( $restriction['conditions'] ) ) {
-				$conditions_match = $this->condition_engine->evaluate_conditions( $restriction['conditions'], 'checkout' );
-			} else {
-				$conditions_match = true;
-			}
-
-			if ( $conditions_match ) {
-				if ( ! empty( $restriction['excluded_methods'] ) ) {
-					$excluded_methods = array_merge( $excluded_methods, $restriction['excluded_methods'] );
-				}
+			if ( $this->restriction_matches( $restriction ) && ! empty( $restriction['excluded_methods'] ) ) {
+				$excluded_methods = array_merge( $excluded_methods, $restriction['excluded_methods'] );
 			}
 		}
 
@@ -345,20 +299,8 @@ class Oli_CSP_Restriction_Handler {
 		$excluded_gateways = array();
 
 		foreach ( $restrictions as $restriction ) {
-			$conditions_match = false;
-
-			if ( ! empty( $restriction['condition_groups'] ) ) {
-				$conditions_match = $this->condition_engine->evaluate_condition_groups( $restriction['condition_groups'], 'checkout' );
-			} elseif ( ! empty( $restriction['conditions'] ) ) {
-				$conditions_match = $this->condition_engine->evaluate_conditions( $restriction['conditions'], 'checkout' );
-			} else {
-				$conditions_match = true;
-			}
-
-			if ( $conditions_match ) {
-				if ( ! empty( $restriction['excluded_gateways'] ) ) {
-					$excluded_gateways = array_merge( $excluded_gateways, $restriction['excluded_gateways'] );
-				}
+			if ( $this->restriction_matches( $restriction ) && ! empty( $restriction['excluded_gateways'] ) ) {
+				$excluded_gateways = array_merge( $excluded_gateways, $restriction['excluded_gateways'] );
 			}
 		}
 
@@ -374,5 +316,23 @@ class Oli_CSP_Restriction_Handler {
 	private function get_package_zone_id( $package ) {
 		$zone = wc_get_shipping_zone( $package );
 		return $zone ? $zone->get_id() : 0;
+	}
+
+	/**
+	 * Whether a restriction's conditions match (grouped OR, flat AND, or always).
+	 *
+	 * @param array $restriction Restriction data.
+	 * @return bool
+	 */
+	private function restriction_matches( $restriction ) {
+		if ( ! empty( $restriction['condition_groups'] ) ) {
+			return $this->condition_engine->evaluate_condition_groups( $restriction['condition_groups'], 'checkout' );
+		}
+
+		if ( ! empty( $restriction['conditions'] ) ) {
+			return $this->condition_engine->evaluate_conditions( $restriction['conditions'], 'checkout' );
+		}
+
+		return true;
 	}
 }

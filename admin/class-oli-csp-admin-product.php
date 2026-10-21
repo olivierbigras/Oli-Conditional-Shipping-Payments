@@ -98,7 +98,7 @@ class Oli_CSP_Admin_Product {
 		?>
 		<p class="form-field">
 			<label><?php esc_html_e( 'Exclude Shipping Methods', 'oli-conditional-shipping-payments' ); ?></label>
-			<select name="_oli_csp_restrictions[shipping_methods][0][excluded_methods][]" multiple class="wc-enhanced-select" style="width: 50%;">
+			<select name="_oli_csp_restrictions[shipping_methods][0][excluded_methods][]" multiple class="wc-enhanced-select oli-csp-select-half">
 				<?php foreach ( $shipping_methods as $method_id => $method ) : ?>
 					<option value="<?php echo esc_attr( $method_id ); ?>" <?php selected( in_array( $method_id, $excluded_methods, true ) ); ?>>
 						<?php echo esc_html( $method->get_method_title() ); ?>
@@ -126,7 +126,7 @@ class Oli_CSP_Admin_Product {
 		?>
 		<p class="form-field">
 			<label><?php esc_html_e( 'Exclude Payment Gateways', 'oli-conditional-shipping-payments' ); ?></label>
-			<select name="_oli_csp_restrictions[payment_gateways][0][excluded_gateways][]" multiple class="wc-enhanced-select" style="width: 50%;">
+			<select name="_oli_csp_restrictions[payment_gateways][0][excluded_gateways][]" multiple class="wc-enhanced-select oli-csp-select-half">
 				<?php foreach ( $payment_gateways as $gateway_id => $gateway ) : ?>
 					<option value="<?php echo esc_attr( $gateway_id ); ?>" <?php selected( in_array( $gateway_id, $excluded_gateways, true ) ); ?>>
 						<?php echo esc_html( $gateway->get_title() ); ?>
@@ -156,7 +156,7 @@ class Oli_CSP_Admin_Product {
 		?>
 		<p class="form-field">
 			<label><?php esc_html_e( 'Exclude Countries', 'oli-conditional-shipping-payments' ); ?></label>
-			<select name="_oli_csp_restrictions[shipping_destinations][0][excluded_countries][]" multiple class="wc-enhanced-select" style="width: 50%;">
+			<select name="_oli_csp_restrictions[shipping_destinations][0][excluded_countries][]" multiple class="wc-enhanced-select oli-csp-select-half">
 				<?php foreach ( $countries as $country_code => $country_name ) : ?>
 					<option value="<?php echo esc_attr( $country_code ); ?>" <?php selected( in_array( $country_code, $excluded_countries, true ) ); ?>>
 						<?php echo esc_html( $country_name ); ?>
@@ -167,7 +167,7 @@ class Oli_CSP_Admin_Product {
 		</p>
 		<p class="form-field">
 			<label><?php esc_html_e( 'Restriction Message', 'oli-conditional-shipping-payments' ); ?></label>
-			<textarea name="_oli_csp_restrictions[shipping_destinations][0][message]" rows="2" style="width: 50%;"><?php echo esc_textarea( $message ); ?></textarea>
+			<textarea name="_oli_csp_restrictions[shipping_destinations][0][message]" rows="2" class="oli-csp-select-half"><?php echo esc_textarea( $message ); ?></textarea>
 			<span class="description"><?php esc_html_e( 'Custom message shown when shipping to excluded countries.', 'oli-conditional-shipping-payments' ); ?></span>
 		</p>
 		<?php
@@ -179,6 +179,10 @@ class Oli_CSP_Admin_Product {
 	 * @param int $post_id Product ID.
 	 */
 	public function save_product_restrictions( $post_id ) {
+		if ( ! current_user_can( 'edit_product', $post_id ) ) {
+			return;
+		}
+
 		// Verify nonce - WooCommerce handles this in woocommerce_process_product_meta action.
 		if ( ! isset( $_POST['woocommerce_meta_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['woocommerce_meta_nonce'] ) ), 'woocommerce_save_data' ) ) {
 			return;

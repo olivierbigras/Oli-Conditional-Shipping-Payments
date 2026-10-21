@@ -44,7 +44,7 @@ jobs:
           vendor/bin/phpcs --config-set installed_paths vendor/wp-coding-standards/wpcs,vendor/phpcompatibility/phpcompatibility-wp
       
       - name: Run PHPCS
-        run: vendor/bin/phpcs --standard=WordPress --extensions=php --ignore=vendor/,tests/ .
+        run: vendor/bin/phpcs
 
   test:
     name: PHPUnit Tests
@@ -81,7 +81,7 @@ jobs:
         run: composer install --prefer-dist --no-progress --no-suggest
       
       - name: Run PHPUnit
-        run: vendor/bin/phpunit
+        run: vendor/bin/phpunit -c phpunit.xml
 
   plugin-check:
     name: Plugin Check

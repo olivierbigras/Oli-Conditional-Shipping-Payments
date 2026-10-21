@@ -88,6 +88,17 @@ class Oli_CSP_Utils {
 					$sanitized_restriction['conditions'] = self::sanitize_conditions( $restriction['conditions'] );
 				}
 
+				if ( isset( $restriction['condition_groups'] ) && is_array( $restriction['condition_groups'] ) ) {
+					$sanitized_restriction['condition_groups'] = array();
+					foreach ( $restriction['condition_groups'] as $group ) {
+						$sanitized_restriction['condition_groups'][] = self::sanitize_conditions( $group );
+					}
+				}
+
+				if ( isset( $restriction['zones'] ) ) {
+					$sanitized_restriction['zones'] = array_values( array_unique( array_map( 'absint', (array) $restriction['zones'] ) ) );
+				}
+
 				if ( isset( $restriction['excluded_methods'] ) ) {
 					$sanitized_restriction['excluded_methods'] = array_map( 'sanitize_text_field', (array) $restriction['excluded_methods'] );
 				}

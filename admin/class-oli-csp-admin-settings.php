@@ -44,8 +44,40 @@ class Oli_CSP_Admin_Settings {
 		global $current_section;
 
 		if ( '' === $current_section ) {
+			$this->output_import_report();
 			$this->output_restrictions_settings();
 		}
+	}
+
+	/**
+	 * Output the official-extension import report stored in a transient.
+	 */
+	private function output_import_report() {
+		if ( empty( $_GET['import_report'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			return;
+		}
+
+		$report = get_transient( 'oli_csp_import_report' );
+		if ( ! is_array( $report ) ) {
+			return;
+		}
+
+		delete_transient( 'oli_csp_import_report' );
+
+		$message = isset( $report['message'] ) ? (string) $report['message'] : '';
+		$errors  = isset( $report['errors'] ) && is_array( $report['errors'] ) ? $report['errors'] : array();
+		?>
+		<div class="notice notice-info oli-csp-import-report">
+			<p><?php echo esc_html( $message ); ?></p>
+			<?php if ( ! empty( $errors ) ) : ?>
+				<ul>
+					<?php foreach ( $errors as $error ) : ?>
+						<li><?php echo esc_html( (string) $error ); ?></li>
+					<?php endforeach; ?>
+				</ul>
+			<?php endif; ?>
+		</div>
+		<?php
 	}
 
 	/**
@@ -116,11 +148,9 @@ class Oli_CSP_Admin_Settings {
 						<label><?php esc_html_e( 'Export Restrictions', 'oli-conditional-shipping-payments' ); ?></label>
 					</th>
 					<td class="forminp">
-						<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-							<input type="hidden" name="action" value="oli_csp_export" />
-							<?php wp_nonce_field( 'oli_csp_export', 'oli_csp_export_nonce' ); ?>
-							<?php submit_button( __( 'Export as JSON', 'oli-conditional-shipping-payments' ), 'secondary', 'submit', false ); ?>
-						</form>
+						<a class="button" href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=oli_csp_export' ), 'oli_csp_export', 'oli_csp_export_nonce' ) ); ?>">
+							<?php esc_html_e( 'Export as JSON', 'oli-conditional-shipping-payments' ); ?>
+						</a>
 					</td>
 				</tr>
 				<tr valign="top">
@@ -128,12 +158,11 @@ class Oli_CSP_Admin_Settings {
 						<label><?php esc_html_e( 'Import Restrictions', 'oli-conditional-shipping-payments' ); ?></label>
 					</th>
 					<td class="forminp">
-						<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" enctype="multipart/form-data">
-							<input type="hidden" name="action" value="oli_csp_import" />
-							<?php wp_nonce_field( 'oli_csp_import', 'oli_csp_import_nonce' ); ?>
-							<input type="file" name="oli_csp_import_file" accept=".json" />
-							<?php submit_button( __( 'Import from JSON', 'oli-conditional-shipping-payments' ), 'secondary', 'submit', false ); ?>
-						</form>
+						<input type="file" name="oli_csp_import_file" accept=".json" />
+						<?php wp_nonce_field( 'oli_csp_import', 'oli_csp_import_nonce' ); ?>
+						<button type="submit" class="button" name="action" value="oli_csp_import" formaction="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" formmethod="post" formenctype="multipart/form-data">
+							<?php esc_html_e( 'Import from JSON', 'oli-conditional-shipping-payments' ); ?>
+						</button>
 					</td>
 				</tr>
 				<tr valign="top">
@@ -141,17 +170,16 @@ class Oli_CSP_Admin_Settings {
 						<label><?php esc_html_e( 'Import from Official Extension', 'oli-conditional-shipping-payments' ); ?></label>
 					</th>
 					<td class="forminp">
-						<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-							<input type="hidden" name="action" value="oli_csp_import_official" />
-							<?php wp_nonce_field( 'oli_csp_import_official', 'oli_csp_import_official_nonce' ); ?>
-							<label>
-								<input type="checkbox" name="dry_run" value="1" checked />
-								<?php esc_html_e( 'Dry run (preview only)', 'oli-conditional-shipping-payments' ); ?>
-							</label>
-							<br />
-							<?php submit_button( __( 'Import from Official Extension', 'oli-conditional-shipping-payments' ), 'secondary', 'submit', false ); ?>
-							<p class="description"><?php esc_html_e( 'Import restrictions from WooCommerce Conditional Shipping and Payments extension.', 'oli-conditional-shipping-payments' ); ?></p>
-						</form>
+						<?php wp_nonce_field( 'oli_csp_import_official', 'oli_csp_import_official_nonce' ); ?>
+						<label>
+							<input type="checkbox" name="dry_run" value="1" checked />
+							<?php esc_html_e( 'Dry run (preview only)', 'oli-conditional-shipping-payments' ); ?>
+						</label>
+						<br />
+						<button type="submit" class="button" name="action" value="oli_csp_import_official" formaction="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" formmethod="post">
+							<?php esc_html_e( 'Import from Official Extension', 'oli-conditional-shipping-payments' ); ?>
+						</button>
+						<p class="description"><?php esc_html_e( 'Import restrictions from WooCommerce Conditional Shipping and Payments extension.', 'oli-conditional-shipping-payments' ); ?></p>
 					</td>
 				</tr>
 			</tbody>
@@ -183,6 +211,9 @@ class Oli_CSP_Admin_Settings {
 			<button type="button" class="button oli-csp-add-restriction" data-type="<?php echo esc_attr( $type ); ?>">
 				<?php esc_html_e( 'Add Restriction', 'oli-conditional-shipping-payments' ); ?>
 			</button>
+			<template class="oli-csp-restriction-template">
+				<?php $this->output_restriction_row( $type, '__index__', array() ); ?>
+			</template>
 		</div>
 		<?php
 	}
@@ -197,7 +228,17 @@ class Oli_CSP_Admin_Settings {
 	private function output_restriction_row( $type, $index, $restriction ) {
 		?>
 		<div class="oli-csp-restriction-row">
-			<h5><?php echo esc_html( sprintf( __( 'Restriction #%d', 'oli-conditional-shipping-payments' ), $index + 1 ) ); ?></h5>
+			<h5>
+				<?php
+				echo esc_html(
+					sprintf(
+						/* translators: %d: restriction number */
+						__( 'Restriction #%d', 'oli-conditional-shipping-payments' ),
+						(int) $index + 1
+					)
+				);
+				?>
+			</h5>
 			
 			<?php
 			// Output excluded items based on type.
@@ -236,7 +277,7 @@ class Oli_CSP_Admin_Settings {
 		$shipping_methods = WC()->shipping()->get_shipping_methods();
 		?>
 		<label><?php esc_html_e( 'Exclude Shipping Methods', 'oli-conditional-shipping-payments' ); ?></label>
-		<select name="oli_csp_restrictions[<?php echo esc_attr( $type ); ?>][<?php echo esc_attr( $index ); ?>][excluded_methods][]" multiple class="oli-csp-select2" style="width: 100%;">
+		<select name="oli_csp_restrictions[<?php echo esc_attr( $type ); ?>][<?php echo esc_attr( $index ); ?>][excluded_methods][]" multiple class="wc-enhanced-select oli-csp-select-wide">
 			<?php foreach ( $shipping_methods as $method_id => $method ) : ?>
 				<option value="<?php echo esc_attr( $method_id ); ?>" <?php selected( in_array( $method_id, $excluded_methods, true ) ); ?>>
 					<?php echo esc_html( $method->get_method_title() ); ?>
@@ -258,7 +299,7 @@ class Oli_CSP_Admin_Settings {
 		$payment_gateways  = WC()->payment_gateways()->payment_gateways();
 		?>
 		<label><?php esc_html_e( 'Exclude Payment Gateways', 'oli-conditional-shipping-payments' ); ?></label>
-		<select name="oli_csp_restrictions[<?php echo esc_attr( $type ); ?>][<?php echo esc_attr( $index ); ?>][excluded_gateways][]" multiple class="oli-csp-select2" style="width: 100%;">
+		<select name="oli_csp_restrictions[<?php echo esc_attr( $type ); ?>][<?php echo esc_attr( $index ); ?>][excluded_gateways][]" multiple class="wc-enhanced-select oli-csp-select-wide">
 			<?php foreach ( $payment_gateways as $gateway_id => $gateway ) : ?>
 				<option value="<?php echo esc_attr( $gateway_id ); ?>" <?php selected( in_array( $gateway_id, $excluded_gateways, true ) ); ?>>
 					<?php echo esc_html( $gateway->get_title() ); ?>
@@ -281,7 +322,7 @@ class Oli_CSP_Admin_Settings {
 		$countries          = WC()->countries->get_countries();
 		?>
 		<label><?php esc_html_e( 'Exclude Countries', 'oli-conditional-shipping-payments' ); ?></label>
-		<select name="oli_csp_restrictions[<?php echo esc_attr( $type ); ?>][<?php echo esc_attr( $index ); ?>][excluded_countries][]" multiple class="oli-csp-select2" style="width: 100%;">
+		<select name="oli_csp_restrictions[<?php echo esc_attr( $type ); ?>][<?php echo esc_attr( $index ); ?>][excluded_countries][]" multiple class="wc-enhanced-select oli-csp-select-wide">
 			<?php foreach ( $countries as $country_code => $country_name ) : ?>
 				<option value="<?php echo esc_attr( $country_code ); ?>" <?php selected( in_array( $country_code, $excluded_countries, true ) ); ?>>
 					<?php echo esc_html( $country_name ); ?>
@@ -330,7 +371,8 @@ class Oli_CSP_Admin_Settings {
 	 * Export restrictions as JSON.
 	 */
 	public function export_restrictions() {
-		if ( ! current_user_can( 'manage_woocommerce' ) || ! isset( $_POST['oli_csp_export_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['oli_csp_export_nonce'] ) ), 'oli_csp_export' ) ) {
+		$nonce = isset( $_REQUEST['oli_csp_export_nonce'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['oli_csp_export_nonce'] ) ) : '';
+		if ( ! current_user_can( 'manage_woocommerce' ) || ! wp_verify_nonce( $nonce, 'oli_csp_export' ) ) {
 			wp_die( esc_html__( 'Permission denied.', 'oli-conditional-shipping-payments' ) );
 		}
 
@@ -353,7 +395,10 @@ class Oli_CSP_Admin_Settings {
 			wp_die( esc_html__( 'Permission denied.', 'oli-conditional-shipping-payments' ) );
 		}
 
-		if ( empty( $_FILES['oli_csp_import_file']['tmp_name'] ) ) {
+		$tmp_name = isset( $_FILES['oli_csp_import_file']['tmp_name'] ) ? $_FILES['oli_csp_import_file']['tmp_name'] : '';
+		$filename = isset( $_FILES['oli_csp_import_file']['name'] ) ? sanitize_file_name( wp_unslash( $_FILES['oli_csp_import_file']['name'] ) ) : '';
+
+		if ( empty( $tmp_name ) || ! is_uploaded_file( $tmp_name ) ) {
 			wp_safe_redirect(
 				add_query_arg(
 					array(
@@ -367,7 +412,23 @@ class Oli_CSP_Admin_Settings {
 			exit;
 		}
 
-		$file_content = file_get_contents( $_FILES['oli_csp_import_file']['tmp_name'] ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+		$filetype = wp_check_filetype( $filename, array( 'json' => 'application/json' ) );
+		if ( empty( $filetype['ext'] ) ) {
+			wp_safe_redirect(
+				add_query_arg(
+					array(
+						'page'  => 'wc-settings',
+						'tab'   => 'restrictions',
+						'error' => 'invalid_json',
+					),
+					admin_url( 'admin.php' )
+				)
+			);
+			exit;
+		}
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- validated uploaded temp file.
+		$file_content = file_get_contents( $tmp_name );
 		$restrictions = Oli_CSP_Utils::import_from_json( $file_content );
 
 		if ( is_wp_error( $restrictions ) ) {

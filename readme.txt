@@ -4,11 +4,11 @@ Tags: woocommerce, shipping, payment, conditional, restrictions
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 0.1.1
+Stable tag: 0.1.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 WC requires at least: 9.0
-WC tested up to: 11.0
+WC tested up to: 11.2
 
 Restrict shipping methods, payment gateways, and shipping destinations based on conditional rules for WooCommerce.
 
@@ -32,7 +32,7 @@ Oli Conditional Shipping and Payments for WooCommerce allows you to create power
 
 **Powerful Condition Engine:**
 
-The plugin supports 22 different condition types with AND logic for precise control:
+The plugin supports 22 different condition types. Conditions inside a group use AND logic; multiple groups use OR logic:
 
 * Cart Total, Cart Subtotal, Order Total
 * Product in Cart, Category in Cart, Tag in Cart
@@ -61,6 +61,12 @@ The plugin supports 22 different condition types with AND logic for precise cont
 * Import from WooCommerce Conditional Shipping and Payments extension (official)
 * Debug mode for administrators
 * Extensible via filters and actions
+
+== External services ==
+
+This plugin does not connect to any third-party or external service. Restriction rules are stored in the WordPress database and evaluated locally at cart and checkout. There are no remote HTTP calls, no tracking, and no third-party scripts or fonts.
+
+GitHub is linked only as the public source-code repository (https://github.com/olivierbigras/Oli-Conditional-Shipping-Payments). The plugin itself never contacts GitHub.
 
 == Installation ==
 
@@ -92,6 +98,10 @@ Yes, the plugin declares full compatibility with WooCommerce's High-Performance 
 
 Yes! Edit any product and scroll down to the "Product-Specific Restrictions" section in the General tab.
 
+= Does this plugin send data to external services? =
+
+No. All rules are stored and evaluated on your site. See the External services section.
+
 == Screenshots ==
 
 1. Global restrictions settings page
@@ -100,6 +110,22 @@ Yes! Edit any product and scroll down to the "Product-Specific Restrictions" sec
 4. Import/Export interface
 
 == Changelog ==
+
+= 0.1.2 - 2026-10-21 =
+* WordPress.org readiness: External services section, GPLv2 LICENSE, uninstall cleanup
+* Move remaining inline CSS widths into the enqueued admin stylesheet
+* Sanitize condition groups and zone IDs; capability check on product save
+* Destination restrictions now evaluate condition groups (OR) like shipping and payments
+* Import report is shown after an official-extension import
+* GitHub links updated to github.com/olivierbigras
+* Tested up to WooCommerce 11.2
+
+= 0.1.1 - 2026-10-19 =
+* OR logic between condition groups (AND within a group)
+* Official operators: is, is_not, in, not_in, greater, less, contains
+* Per-zone shipping method restrictions
+* Importer maps official conditions/operators and never partially imports a rule
+* Official-semantics unit tests
 
 = 0.1.0 - 2026-10-19 =
 * Initial release
@@ -113,8 +139,18 @@ Yes! Edit any product and scroll down to the "Product-Specific Restrictions" sec
 
 == Upgrade Notice ==
 
+= 0.1.2 =
+WordPress.org readiness: no external services, uninstall cleanup, and safer admin sanitization. Existing oli_csp_* settings are kept.
+
+= 0.1.1 =
+Adds OR groups, official operators, and per-zone shipping restrictions. Existing rules keep working.
+
 = 0.1.0 =
 Initial release of Oli Conditional Shipping and Payments for WooCommerce.
+
+== Privacy ==
+
+This plugin does not collect, store, or transmit personal data to any third party. Restriction rules and settings are stored in your WordPress database (`oli_csp_*` options and optional `_oli_csp_restrictions` product meta). Uninstalling the plugin removes those options, the version flag, and product meta.
 
 == Additional Info ==
 
@@ -124,8 +160,4 @@ This plugin is designed to provide feature parity with the official WooCommerce 
 
 **Support:**
 
-For support, feature requests, or bug reports, please visit the plugin's GitHub repository.
-
-**Privacy:**
-
-This plugin does not collect, store, or transmit any user data. All restriction rules are stored locally in your WordPress database.
+For support, feature requests, or bug reports, please visit https://github.com/olivierbigras/Oli-Conditional-Shipping-Payments

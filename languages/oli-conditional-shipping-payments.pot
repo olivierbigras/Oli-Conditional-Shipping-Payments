@@ -3,7 +3,7 @@
 # This file is distributed under the GPL v2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Oli Conditional Shipping and Payments for WooCommerce 0.1.0\n"
+"Project-Id-Version: Oli Conditional Shipping and Payments for WooCommerce 0.1.2\n"
 "Report-Msgid-Bugs-To: https://olivierbigras.com/\n"
 "POT-Creation-Date: 2026-10-19 00:00:00+00:00\n"
 "MIME-Version: 1.0\n"

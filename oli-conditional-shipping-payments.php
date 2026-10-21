@@ -3,7 +3,7 @@
  * Plugin Name: Oli Conditional Shipping and Payments for WooCommerce
  * Plugin URI: https://olivierbigras.com/
  * Description: Restrict shipping methods, payment gateways, and shipping destinations based on conditional rules. Supports classic and block checkout, HPOS, and multicurrency.
- * Version: 0.1.1
+ * Version: 0.1.2
  * Author: Olivier Bigras
  * Author URI: https://olivierbigras.com/
  * License: GPL v2 or later
@@ -14,7 +14,7 @@
  * Tested up to: 7.1
  * Requires PHP: 7.4
  * WC requires at least: 9.0
- * WC tested up to: 11.0
+ * WC tested up to: 11.2
  *
  * @package Oli_Conditional_Shipping_Payments
  */
@@ -22,7 +22,7 @@
 defined( 'ABSPATH' ) || exit;
 
 // Define plugin constants.
-define( 'OLI_CSP_VERSION', '0.1.1' );
+define( 'OLI_CSP_VERSION', '0.1.2' );
 define( 'OLI_CSP_FILE', __FILE__ );
 define( 'OLI_CSP_PATH', plugin_dir_path( __FILE__ ) );
 define( 'OLI_CSP_URL', plugin_dir_url( __FILE__ ) );
@@ -95,6 +95,8 @@ class Oli_CSP_Plugin {
 
 		// Include core files.
 		$this->includes();
+
+		oli_csp_maybe_upgrade();
 
 		// Initialize components.
 		$this->condition_engine    = new Oli_CSP_Condition_Engine();
@@ -215,14 +217,47 @@ function oli_csp() {
 oli_csp();
 
 /**
+ * Copy legacy option keys to the oli_csp_ prefix, then store the current version.
+ */
+function oli_csp_maybe_upgrade() {
+	$installed = get_option( 'oli_csp_version', '' );
+
+	if ( version_compare( (string) $installed, OLI_CSP_VERSION, '>=' ) ) {
+		return;
+	}
+
+	// Copy any legacy unprefixed / short-prefix options, then delete the old keys.
+	$legacy_map = array(
+		'csp_global_restrictions' => 'oli_csp_global_restrictions',
+		'csp_settings'            => 'oli_csp_settings',
+	);
+
+	foreach ( $legacy_map as $old_key => $new_key ) {
+		if ( false !== get_option( $new_key, false ) ) {
+			continue;
+		}
+
+		$old_value = get_option( $old_key, false );
+		if ( false === $old_value ) {
+			continue;
+		}
+
+		update_option( $new_key, $old_value );
+		delete_option( $old_key );
+	}
+
+	update_option( 'oli_csp_version', OLI_CSP_VERSION );
+}
+
+/**
  * Activation hook.
  */
 function oli_csp_activate() {
 	// Set default options.
-	if ( ! get_option( 'oli_csp_global_restrictions' ) ) {
+	if ( false === get_option( 'oli_csp_global_restrictions', false ) ) {
 		update_option( 'oli_csp_global_restrictions', array() );
 	}
-	if ( ! get_option( 'oli_csp_settings' ) ) {
+	if ( false === get_option( 'oli_csp_settings', false ) ) {
 		update_option(
 			'oli_csp_settings',
 			array(
@@ -234,6 +269,7 @@ function oli_csp_activate() {
 		);
 	}
 
+	oli_csp_maybe_upgrade();
 	flush_rewrite_rules();
 }
 register_activation_hook( __FILE__, 'oli_csp_activate' );

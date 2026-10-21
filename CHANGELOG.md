@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.2] - 2026-10-21
+
+### Added
+- `== External services ==` section in readme.txt (no remote calls)
+- GPLv2 LICENSE, uninstall cleanup, and `phpcs.xml.dist`
+- Upgrade routine that copies any leftover `csp_*` options to `oli_csp_*` then deletes the old keys
+- Import report notice after an official-extension import
+- Hidden restriction-row template so "Add Restriction" creates real fields
+
+### Changed
+- Inline `style="width:…"` attributes moved to the enqueued admin stylesheet
+- Destination restrictions evaluate `condition_groups` the same way as shipping and payments
+- GitHub links and Composer package name use `github.com/olivierbigras`
+- WC tested up to 11.2; PHPUnit config lives at the repository root
+
+### Fixed
+- Product restriction save requires `edit_product`
+- JSON import accepts only an uploaded `.json` file
+- `condition_groups` and `zones` are sanitized on save
+- Nested import/export forms inside WooCommerce settings (invalid HTML)
+
 ## [0.1.1] - 2026-10-19
 
 ### Added
@@ -81,19 +102,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Dry-run mode with comparison report
   - Automatic data conversion and mapping
   - Product-specific restriction import
-- Admin settings UI with intuitive restriction management
+- Admin settings UI with restriction management
 - Unit tests for condition engine
 - GitHub Actions CI workflow (PHP lint, PHPCS, PHPUnit)
 - Full internationalization support with .pot file
-- Complete WordPress.org plugin guidelines compliance
-- Plugin Check (PCP) compatibility
 
 ### Technical Details
 - Minimum WordPress version: 6.5
 - Minimum WooCommerce version: 9.0
 - Minimum PHP version: 7.4
 - Tested up to WordPress 7.1
-- Tested with WooCommerce 11.0
+- Tested with WooCommerce 11.2
 
 ### Developer Features
 - Extensible condition engine via filters
@@ -103,15 +122,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - No external API calls or tracking
 - Clean, documented code following WordPress coding standards
 
-## [Unreleased]
-
-### Planned Features
-- Admin UI improvements with live preview
-- Bulk import/export for product restrictions
-- Restriction templates/presets
-- Enhanced debug logging
-- More granular state/postcode controls
-- Integration with popular subscription and membership plugins
-
-[0.1.1]: https://github.com/bigrat95/oli-conditional-shipping-payments/compare/v0.1.0...v0.1.1
-[0.1.0]: https://github.com/bigrat95/oli-conditional-shipping-payments/releases/tag/v0.1.0
+[0.1.2]: https://github.com/olivierbigras/Oli-Conditional-Shipping-Payments/compare/v0.1.1...v0.1.2
+[0.1.1]: https://github.com/olivierbigras/Oli-Conditional-Shipping-Payments/compare/v0.1.0...v0.1.1
+[0.1.0]: https://github.com/olivierbigras/Oli-Conditional-Shipping-Payments/releases/tag/v0.1.0

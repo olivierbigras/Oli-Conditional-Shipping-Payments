@@ -5,48 +5,61 @@
 (function($) {
 	'use strict';
 
-	$(document).ready(function() {
-		// Initialize Select2 if available.
-		if ($.fn.select2) {
-			$('.oli-csp-select2').select2({
+	function oliCspInitSelect($context) {
+		var $selects = $context.find('.wc-enhanced-select, .oli-csp-select-wide');
+		if (!$selects.length) {
+			return;
+		}
+		if ($.fn.selectWoo) {
+			$selects.filter(':not(.select2-hidden-accessible)').selectWoo({
+				width: '100%'
+			});
+		} else if ($.fn.select2) {
+			$selects.filter(':not(.select2-hidden-accessible)').select2({
 				width: '100%'
 			});
 		}
+	}
 
-		// Add restriction button.
+	$(document).ready(function() {
+		oliCspInitSelect($(document).find('.oli-csp-restrictions-list, .oli-csp-product-restriction-sections'));
+
 		$(document).on('click', '.oli-csp-add-restriction', function(e) {
 			e.preventDefault();
-			
+
 			var $section = $(this).closest('.oli-csp-restriction-section');
-			var type = $section.data('type');
 			var $list = $section.find('.oli-csp-restrictions-list');
+			var template = $section.find('template.oli-csp-restriction-template').get(0);
+			if (!template || !window.oliCspAdmin) {
+				return;
+			}
+
 			var index = $list.find('.oli-csp-restriction-row').length;
-
-			// Create new restriction row (simplified for now).
-			var $newRow = $('<div class="oli-csp-restriction-row"></div>');
-			$newRow.html('<h5>' + window.oliCspAdmin.i18n.addRule + ' #' + (index + 1) + '</h5>' +
-				'<p><em>Save to configure this restriction.</em></p>' +
-				'<button type="button" class="button button-secondary oli-csp-remove-restriction">' +
-				window.oliCspAdmin.i18n.removeRule + '</button>');
-
+			var $newRow = $(template.content.cloneNode(true)).find('.oli-csp-restriction-row').first();
+			$newRow.find('[name]').each(function() {
+				var name = $(this).attr('name');
+				if (name) {
+					$(this).attr('name', name.replace(/__index__/g, String(index)));
+				}
+			});
+			$newRow.find('h5').text(
+				window.oliCspAdmin.i18n.restrictionLabel.replace('%d', String(index + 1))
+			);
 			$list.append($newRow);
+			oliCspInitSelect($newRow);
 		});
 
-		// Remove restriction button.
 		$(document).on('click', '.oli-csp-remove-restriction', function(e) {
 			e.preventDefault();
-			
-			if (confirm(window.oliCspAdmin.i18n.confirmDelete)) {
+
+			if (!window.oliCspAdmin) {
+				return;
+			}
+
+			if (window.confirm(window.oliCspAdmin.i18n.confirmDelete)) {
 				$(this).closest('.oli-csp-restriction-row').remove();
 			}
 		});
-
-		// Handle import report display.
-		if ($('.oli-csp-import-report').length) {
-			$('.oli-csp-import-report').each(function() {
-				$(this).show();
-			});
-		}
 	});
 
 })(jQuery);

@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<phpunit
+	bootstrap="tests/bootstrap.php"
+	backupGlobals="false"
+	colors="true"
+	convertErrorsToExceptions="true"
+	convertNoticesToExceptions="true"
+	convertWarningsToExceptions="true"
+>
+	<testsuites>
+		<testsuite name="Oli Conditional Shipping Payments Test Suite">
+			<directory prefix="test-" suffix=".php">./tests/unit/</directory>
+		</testsuite>
+	</testsuites>
+	<filter>
+		<whitelist>
+			<directory suffix=".php">./includes/</directory>
+			<directory suffix=".php">./admin/</directory>
+			<exclude>
+				<directory suffix=".php">./vendor/</directory>
+			</exclude>
+		</whitelist>
+	</filter>
+</phpunit>

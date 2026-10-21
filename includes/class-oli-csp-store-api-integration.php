@@ -9,9 +9,6 @@
 
 defined( 'ABSPATH' ) || exit;
 
-use Automattic\WooCommerce\StoreApi\Schemas\ExtendSchema;
-use Automattic\WooCommerce\StoreApi\StoreApi;
-
 /**
  * Class Oli_CSP_Store_API_Integration
  */
@@ -42,7 +39,7 @@ class Oli_CSP_Store_API_Integration {
 	 * @param WP_REST_Request $request Request object.
 	 * @throws Exception If restrictions are violated.
 	 */
-	public function validate_restrictions( $order, $request ) {
+	public function validate_restrictions( $order, $request ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
 		// Validate shipping method restrictions.
 		$this->validate_shipping_methods( $order );
 
@@ -79,7 +76,7 @@ class Oli_CSP_Store_API_Integration {
 
 			if ( in_array( $method_id, $excluded_methods, true ) || in_array( $full_id, $excluded_methods, true ) ) {
 				throw new Exception(
-					__( 'The selected shipping method is not available based on your cart contents.', 'oli-conditional-shipping-payments' )
+					esc_html__( 'The selected shipping method is not available based on your cart contents.', 'oli-conditional-shipping-payments' )
 				);
 			}
 		}
@@ -106,7 +103,7 @@ class Oli_CSP_Store_API_Integration {
 
 		if ( in_array( $payment_method, $excluded_gateways, true ) ) {
 			throw new Exception(
-				__( 'The selected payment method is not available based on your cart contents.', 'oli-conditional-shipping-payments' )
+				esc_html__( 'The selected payment method is not available based on your cart contents.', 'oli-conditional-shipping-payments' )
 			);
 		}
 	}
@@ -133,11 +130,18 @@ class Oli_CSP_Store_API_Integration {
 		}
 
 		foreach ( $restrictions as $restriction ) {
-			if ( empty( $restriction['conditions'] ) || $this->condition_engine->evaluate_conditions( $restriction['conditions'], 'checkout' ) ) {
-				if ( ! empty( $restriction['excluded_countries'] ) && in_array( $shipping_country, $restriction['excluded_countries'], true ) ) {
-					$message = ! empty( $restriction['message'] ) ? $restriction['message'] : __( 'Shipping to this country is not available.', 'oli-conditional-shipping-payments' );
-					throw new Exception( $message );
-				}
+			$matches = false;
+			if ( ! empty( $restriction['condition_groups'] ) ) {
+				$matches = $this->condition_engine->evaluate_condition_groups( $restriction['condition_groups'], 'checkout' );
+			} elseif ( ! empty( $restriction['conditions'] ) ) {
+				$matches = $this->condition_engine->evaluate_conditions( $restriction['conditions'], 'checkout' );
+			} else {
+				$matches = true;
+			}
+
+			if ( $matches && ! empty( $restriction['excluded_countries'] ) && in_array( $shipping_country, $restriction['excluded_countries'], true ) ) {
+				$message = ! empty( $restriction['message'] ) ? $restriction['message'] : __( 'Shipping to this country is not available.', 'oli-conditional-shipping-payments' );
+				throw new Exception( esc_html( $message ) );
 			}
 		}
 	}

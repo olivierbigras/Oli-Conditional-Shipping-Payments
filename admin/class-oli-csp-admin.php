@@ -55,14 +55,14 @@ class Oli_CSP_Admin {
 		wp_enqueue_style(
 			'oli-csp-admin',
 			OLI_CSP_URL . 'assets/css/admin.css',
-			array(),
+			array( 'woocommerce_admin_styles' ),
 			OLI_CSP_VERSION
 		);
 
 		wp_enqueue_script(
 			'oli-csp-admin',
 			OLI_CSP_URL . 'assets/js/admin.js',
-			array( 'jquery', 'wp-util' ),
+			array( 'jquery', 'wc-enhanced-select' ),
 			OLI_CSP_VERSION,
 			true
 		);
@@ -71,14 +71,15 @@ class Oli_CSP_Admin {
 			'oli-csp-admin',
 			'oliCspAdmin',
 			array(
-				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-				'nonce'   => wp_create_nonce( 'oli_csp_admin' ),
-				'i18n'    => array(
-					'addCondition'    => __( 'Add Condition', 'oli-conditional-shipping-payments' ),
-					'removeCondition' => __( 'Remove Condition', 'oli-conditional-shipping-payments' ),
-					'addRule'         => __( 'Add Rule', 'oli-conditional-shipping-payments' ),
-					'removeRule'      => __( 'Remove Rule', 'oli-conditional-shipping-payments' ),
-					'confirmDelete'   => __( 'Are you sure you want to delete this restriction?', 'oli-conditional-shipping-payments' ),
+				'nonce' => wp_create_nonce( 'oli_csp_admin' ),
+				'i18n'  => array(
+					'addCondition'      => __( 'Add Condition', 'oli-conditional-shipping-payments' ),
+					'removeCondition'   => __( 'Remove Condition', 'oli-conditional-shipping-payments' ),
+					'addRule'           => __( 'Add Rule', 'oli-conditional-shipping-payments' ),
+					'removeRule'        => __( 'Remove Rule', 'oli-conditional-shipping-payments' ),
+					'confirmDelete'     => __( 'Are you sure you want to delete this restriction?', 'oli-conditional-shipping-payments' ),
+					'restrictionLabel'  => __( 'Restriction #%d', 'oli-conditional-shipping-payments' ),
+					'saveToConfigure'   => __( 'Save settings to keep this restriction.', 'oli-conditional-shipping-payments' ),
 				),
 			)
 		);

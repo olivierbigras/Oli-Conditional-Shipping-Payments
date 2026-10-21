@@ -85,3 +85,12 @@
 .oli-csp-import-report .notice-warning {
 	border-left-color: #dba617;
 }
+
+.oli-csp-select-wide {
+	width: 100%;
+}
+
+.oli-csp-select-half {
+	width: 50%;
+}
+

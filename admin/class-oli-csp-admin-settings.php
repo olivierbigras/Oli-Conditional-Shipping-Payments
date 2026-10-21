@@ -362,7 +362,7 @@ class Oli_CSP_Admin_Settings {
 
 		// Save restrictions.
 		if ( isset( $_POST['oli_csp_restrictions'] ) ) {
-			$restrictions = Oli_CSP_Utils::sanitize_restriction_data( wp_unslash( $_POST['oli_csp_restrictions'] ) );
+			$restrictions = Oli_CSP_Utils::sanitize_restriction_data( wp_unslash( $_POST['oli_csp_restrictions'] ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized in Oli_CSP_Utils::sanitize_restriction_data().
 			update_option( 'oli_csp_global_restrictions', $restrictions );
 		}
 	}
@@ -395,7 +395,7 @@ class Oli_CSP_Admin_Settings {
 			wp_die( esc_html__( 'Permission denied.', 'oli-conditional-shipping-payments' ) );
 		}
 
-		$tmp_name = isset( $_FILES['oli_csp_import_file']['tmp_name'] ) ? $_FILES['oli_csp_import_file']['tmp_name'] : '';
+		$tmp_name = isset( $_FILES['oli_csp_import_file']['tmp_name'] ) ? sanitize_text_field( wp_unslash( $_FILES['oli_csp_import_file']['tmp_name'] ) ) : '';
 		$filename = isset( $_FILES['oli_csp_import_file']['name'] ) ? sanitize_file_name( wp_unslash( $_FILES['oli_csp_import_file']['name'] ) ) : '';
 
 		if ( empty( $tmp_name ) || ! is_uploaded_file( $tmp_name ) ) {

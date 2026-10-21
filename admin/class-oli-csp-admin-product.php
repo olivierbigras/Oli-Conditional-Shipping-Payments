@@ -193,13 +193,15 @@ class Oli_CSP_Admin_Product {
 			return;
 		}
 
-		$restrictions = Oli_CSP_Utils::sanitize_restriction_data( wp_unslash( $_POST['_oli_csp_restrictions'] ) );
+		$restrictions = Oli_CSP_Utils::sanitize_restriction_data( wp_unslash( $_POST['_oli_csp_restrictions'] ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized in Oli_CSP_Utils::sanitize_restriction_data().
 
 		// Remove empty restrictions.
 		foreach ( $restrictions as $type => $type_restrictions ) {
-			if ( empty( $type_restrictions[0]['excluded_methods'] ) &&
-				 empty( $type_restrictions[0]['excluded_gateways'] ) &&
-				 empty( $type_restrictions[0]['excluded_countries'] ) ) {
+			if (
+				empty( $type_restrictions[0]['excluded_methods'] ) &&
+				empty( $type_restrictions[0]['excluded_gateways'] ) &&
+				empty( $type_restrictions[0]['excluded_countries'] )
+			) {
 				unset( $restrictions[ $type ] );
 			}
 		}

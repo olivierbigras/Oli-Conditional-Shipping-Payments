@@ -556,7 +556,7 @@ class Oli_CSP_Condition_Engine {
 	 * @param array $condition Condition configuration.
 	 * @return bool
 	 */
-	private function check_backorder_in_cart( $condition ) {
+	private function check_backorder_in_cart( $condition ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
 		if ( ! WC()->cart ) {
 			return false;
 		}

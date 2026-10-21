@@ -404,7 +404,8 @@ class Oli_CSP_Importer {
 			self::OFFICIAL_META_KEY
 		);
 
-		$results = $wpdb->get_results( $query ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- one-off import of official meta; $query is prepared above.
+		$results = $wpdb->get_results( $query );
 
 		if ( empty( $results ) ) {
 			return $product_restrictions;

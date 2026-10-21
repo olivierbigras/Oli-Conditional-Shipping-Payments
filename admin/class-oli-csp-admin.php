@@ -73,13 +73,14 @@ class Oli_CSP_Admin {
 			array(
 				'nonce' => wp_create_nonce( 'oli_csp_admin' ),
 				'i18n'  => array(
-					'addCondition'      => __( 'Add Condition', 'oli-conditional-shipping-payments' ),
-					'removeCondition'   => __( 'Remove Condition', 'oli-conditional-shipping-payments' ),
-					'addRule'           => __( 'Add Rule', 'oli-conditional-shipping-payments' ),
-					'removeRule'        => __( 'Remove Rule', 'oli-conditional-shipping-payments' ),
-					'confirmDelete'     => __( 'Are you sure you want to delete this restriction?', 'oli-conditional-shipping-payments' ),
-					'restrictionLabel'  => __( 'Restriction #%d', 'oli-conditional-shipping-payments' ),
-					'saveToConfigure'   => __( 'Save settings to keep this restriction.', 'oli-conditional-shipping-payments' ),
+					'addCondition'     => __( 'Add Condition', 'oli-conditional-shipping-payments' ),
+					'removeCondition'  => __( 'Remove Condition', 'oli-conditional-shipping-payments' ),
+					'addRule'          => __( 'Add Rule', 'oli-conditional-shipping-payments' ),
+					'removeRule'       => __( 'Remove Rule', 'oli-conditional-shipping-payments' ),
+					'confirmDelete'    => __( 'Are you sure you want to delete this restriction?', 'oli-conditional-shipping-payments' ),
+					/* translators: %d: restriction number */
+					'restrictionLabel' => __( 'Restriction #%d', 'oli-conditional-shipping-payments' ),
+					'saveToConfigure'  => __( 'Save settings to keep this restriction.', 'oli-conditional-shipping-payments' ),
 				),
 			)
 		);

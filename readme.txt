@@ -119,6 +119,7 @@ No. All rules are stored and evaluated on your site. See the External services s
 * Import report is shown after an official-extension import
 * GitHub links updated to github.com/olivierbigras
 * Tested up to WooCommerce 11.2
+* Exclude development files from the distributable ZIP (.distignore / export-ignore)
 
 = 0.1.1 - 2026-10-19 =
 * OR logic between condition groups (AND within a group)

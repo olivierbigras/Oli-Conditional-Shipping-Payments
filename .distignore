@@ -1,0 +1,34 @@
+# Files and directories excluded from the distributable plugin ZIP
+# (wp dist-archive and similar packagers).
+
+# Development trees
+/tests
+/bin
+/scripts
+/.github
+/node_modules
+
+# Tooling config
+phpcs.xml
+phpcs.xml.dist
+.phpcs.xml
+.phpcs.xml.dist
+phpunit.xml
+phpunit.xml.dist
+.phpunit.xml
+.phpunit.xml.dist
+
+# Composer / npm
+composer.json
+composer.lock
+package.json
+package-lock.json
+package*.json
+
+# Git / packaging metadata
+.gitignore
+.distignore
+.gitattributes
+
+# Internal markdown docs (keep WordPress.org readme.txt)
+*.md

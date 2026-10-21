@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - `== External services ==` section in readme.txt (no remote calls)
 - GPLv2 LICENSE, uninstall cleanup, and `phpcs.xml.dist`
+- `.distignore` and `.gitattributes` `export-ignore` so the distributable ZIP omits tests, CI, Composer, and internal markdown
 - Upgrade routine that copies any leftover `csp_*` options to `oli_csp_*` then deletes the old keys
 - Import report notice after an official-extension import
 - Hidden restriction-row template so "Add Restriction" creates real fields

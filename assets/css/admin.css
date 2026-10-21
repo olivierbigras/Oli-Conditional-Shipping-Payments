@@ -1,0 +1,96 @@
+/**
+ * Admin Styles
+ */
+
+.oli-csp-restriction-section {
+	margin: 20px 0;
+	padding: 20px;
+	background: #f9f9f9;
+	border: 1px solid #ddd;
+}
+
+.oli-csp-restriction-section h4 {
+	margin-top: 0;
+}
+
+.oli-csp-restriction-row {
+	margin: 15px 0;
+	padding: 15px;
+	background: #fff;
+	border: 1px solid #ccc;
+	border-left: 4px solid #2271b1;
+}
+
+.oli-csp-restriction-row h5 {
+	margin-top: 0;
+}
+
+.oli-csp-restriction-row label {
+	display: block;
+	font-weight: 600;
+	margin: 10px 0 5px;
+}
+
+.oli-csp-restriction-row select,
+.oli-csp-restriction-row textarea {
+	margin-bottom: 10px;
+}
+
+.oli-csp-add-restriction {
+	margin-top: 10px;
+}
+
+.oli-csp-remove-restriction {
+	margin-top: 15px;
+	color: #b32d2e;
+	border-color: #b32d2e;
+}
+
+.oli-csp-remove-restriction:hover {
+	background: #b32d2e;
+	color: #fff;
+	border-color: #b32d2e;
+}
+
+.oli-csp-product-restrictions {
+	border-top: 1px solid #eee;
+	padding-top: 15px;
+}
+
+.oli-csp-product-restriction-sections {
+	padding-left: 15px;
+}
+
+.oli-csp-product-restriction-sections label {
+	font-weight: 600;
+	display: block;
+	margin: 10px 0 5px;
+}
+
+.oli-csp-import-report {
+	margin: 20px 0;
+	padding: 15px;
+	background: #f0f0f1;
+	border-left: 4px solid #2271b1;
+}
+
+.oli-csp-import-report h4 {
+	margin-top: 0;
+}
+
+.oli-csp-import-report ul {
+	margin: 10px 0;
+}
+
+.oli-csp-import-report .notice-warning {
+	border-left-color: #dba617;
+}
+
+.oli-csp-select-wide {
+	width: 100%;
+}
+
+.oli-csp-select-half {
+	width: 50%;
+}
+

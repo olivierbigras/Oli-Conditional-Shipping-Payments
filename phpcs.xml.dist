@@ -1,0 +1,55 @@
+<?xml version="1.0"?>
+<ruleset name="Oli Conditional Shipping and Payments">
+	<description>WordPress coding standard for Oli Conditional Shipping and Payments.</description>
+
+	<file>.</file>
+
+	<exclude-pattern>*/vendor/*</exclude-pattern>
+	<exclude-pattern>*/tests/*</exclude-pattern>
+	<exclude-pattern>*/node_modules/*</exclude-pattern>
+	<exclude-pattern>*/languages/*</exclude-pattern>
+
+	<arg name="extensions" value="php"/>
+	<arg name="basepath" value="."/>
+	<arg name="parallel" value="4"/>
+	<arg value="sp"/>
+	<arg name="colors"/>
+
+	<config name="minimum_supported_wp_version" value="6.5"/>
+	<config name="testVersion" value="7.4-"/>
+
+	<rule ref="WordPress">
+		<exclude name="Universal.Files.SeparateFunctionsFromOO.Mixed"/>
+	</rule>
+
+	<rule ref="WordPress.Files.FileName.InvalidClassFileName">
+		<exclude-pattern>oli-conditional-shipping-payments.php</exclude-pattern>
+	</rule>
+
+	<rule ref="WordPress.WP.Capabilities">
+		<properties>
+			<property name="custom_capabilities" type="array">
+				<element value="manage_woocommerce"/>
+				<element value="edit_product"/>
+			</property>
+		</properties>
+	</rule>
+
+	<rule ref="WordPress.WP.I18n">
+		<properties>
+			<property name="text_domain" type="array">
+				<element value="oli-conditional-shipping-payments"/>
+			</property>
+		</properties>
+	</rule>
+
+	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+		<properties>
+			<property name="prefixes" type="array">
+				<element value="oli_csp"/>
+				<element value="OLI_CSP"/>
+				<element value="Oli_CSP"/>
+			</property>
+		</properties>
+	</rule>
+</ruleset>

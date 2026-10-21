@@ -1,0 +1,33 @@
+# Exclude development files from `git archive` / the distributable ZIP.
+
+# Development trees
+/tests export-ignore
+/bin export-ignore
+/scripts export-ignore
+/.github export-ignore
+/node_modules export-ignore
+
+# Tooling config
+phpcs.xml export-ignore
+phpcs.xml.dist export-ignore
+.phpcs.xml export-ignore
+.phpcs.xml.dist export-ignore
+phpunit.xml export-ignore
+phpunit.xml.dist export-ignore
+.phpunit.xml export-ignore
+.phpunit.xml.dist export-ignore
+
+# Composer / npm
+composer.json export-ignore
+composer.lock export-ignore
+package.json export-ignore
+package-lock.json export-ignore
+package*.json export-ignore
+
+# Git / packaging metadata
+.gitignore export-ignore
+.distignore export-ignore
+.gitattributes export-ignore
+
+# Internal markdown docs (keep WordPress.org readme.txt)
+*.md export-ignore

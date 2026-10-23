@@ -16,7 +16,7 @@
     "yoast/phpunit-polyfills": "^2.0"
   },
   "license": "GPL-2.0-or-later",
-  "author": "Olivier Bigras <contact@olivierbigras.com>",
+  "author": "Olivier Bigras <oli@olivierbigras.com>",
   "homepage": "https://github.com/olivierbigras/Oli-Conditional-Shipping-Payments",
   "config": {
     "allow-plugins": {

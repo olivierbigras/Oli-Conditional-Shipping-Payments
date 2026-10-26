@@ -20,18 +20,33 @@
 		return window.wp && window.wp.data ? window.wp.data : null;
 	}
 
+	function hasShippingMethodsNoticeContainer() {
+		return !!(
+			document.querySelector('.wp-block-woocommerce-checkout-shipping-methods-block') ||
+			document.querySelector('.wc-block-checkout__shipping-option') ||
+			document.querySelector('[data-block-name="woocommerce/checkout-shipping-methods-block"]')
+		);
+	}
+
 	function contextForArea(area) {
+		var contexts = getConfig().contexts || {};
+
 		if (area === 'shipping') {
-			return 'wc/checkout/shipping';
+			if (hasShippingMethodsNoticeContainer()) {
+				return contexts.shipping || 'wc/checkout/shipping-methods';
+			}
+			return contexts.shippingFallback || 'wc/checkout';
 		}
 		if (area === 'payment') {
-			return 'wc/checkout/payments';
+			return contexts.payment || 'wc/checkout/payments';
 		}
 		if (area === 'cart') {
-			return 'wc/cart';
+			return contexts.cart || 'wc/cart';
 		}
-		return 'wc/checkout';
+		return contexts.checkout || 'wc/checkout';
 	}
+
+	window.oliCspNoticeContextForArea = contextForArea;
 
 	function defaultArea() {
 		if (document.body && document.body.classList.contains('woocommerce-cart')) {
@@ -80,7 +95,7 @@
 		}
 
 		var notices = getExtensionNotices();
-		var key = JSON.stringify(notices);
+		var key = JSON.stringify(notices) + '|' + contextForArea('shipping');
 		if (key === lastKey) {
 			return;
 		}

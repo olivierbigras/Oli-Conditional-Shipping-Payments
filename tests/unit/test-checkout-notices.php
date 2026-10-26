@@ -115,4 +115,59 @@ class Test_Oli_CSP_Checkout_Notices extends TestCase {
 		$this->assertSame( 'checkout', $payload['notices'][0]['area'] );
 		$this->assertSame( 'Hello', $payload['notices'][0]['message'] );
 	}
+
+	/**
+	 * Shipping notices use wc/checkout/shipping-methods, not wc/checkout/shipping.
+	 */
+	public function test_notice_context_mapping() {
+		$this->assertSame(
+			'wc/checkout/shipping-methods',
+			Oli_CSP_Store_API_Integration::notice_context_for_area( 'shipping' )
+		);
+		$this->assertSame(
+			'wc/checkout/shipping-methods',
+			Oli_CSP_Store_API_Integration::notice_context_for_area(
+				'shipping',
+				array( 'wc/checkout/shipping-methods', 'wc/checkout/payments' )
+			)
+		);
+		$this->assertSame(
+			'wc/checkout',
+			Oli_CSP_Store_API_Integration::notice_context_for_area( 'shipping', array() )
+		);
+		$this->assertSame(
+			'wc/checkout',
+			Oli_CSP_Store_API_Integration::notice_context_for_area(
+				'shipping',
+				array( 'wc/checkout', 'wc/checkout/payments' )
+			)
+		);
+		$this->assertSame(
+			'wc/checkout/payments',
+			Oli_CSP_Store_API_Integration::notice_context_for_area( 'payment' )
+		);
+		$this->assertSame(
+			'wc/checkout/payments',
+			Oli_CSP_Store_API_Integration::notice_context_for_area(
+				'payment',
+				array( 'wc/checkout' )
+			)
+		);
+		$this->assertSame( 'wc/cart', Oli_CSP_Store_API_Integration::notice_context_for_area( 'cart' ) );
+		$this->assertSame( 'wc/checkout', Oli_CSP_Store_API_Integration::notice_context_for_area( 'checkout' ) );
+		$this->assertSame( 'wc/checkout', Oli_CSP_Store_API_Integration::notice_context_for_area( 'unknown' ) );
+	}
+
+	/**
+	 * Block renderer maps shipping to a rendered notice context.
+	 */
+	public function test_block_js_uses_rendered_shipping_notice_context() {
+		$js = file_get_contents( dirname( __DIR__, 2 ) . '/assets/js/checkout-blocks.js' );
+
+		$this->assertNotFalse( $js );
+		$this->assertStringContainsString( "'wc/checkout/shipping-methods'", $js );
+		$this->assertStringContainsString( "'wc/checkout/payments'", $js );
+		$this->assertStringContainsString( "contexts.shippingFallback || 'wc/checkout'", $js );
+		$this->assertDoesNotMatchRegularExpression( "/['\"]wc\\/checkout\\/shipping['\"]/", $js );
+	}
 }

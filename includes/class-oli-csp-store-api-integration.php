@@ -214,8 +214,49 @@ class Oli_CSP_Store_API_Integration {
 			'oliCspCheckout',
 			array(
 				'namespace' => self::EXTENSION_NAMESPACE,
+				'contexts'  => array(
+					'shipping'          => self::notice_context_for_area( 'shipping', array( 'wc/checkout/shipping-methods' ) ),
+					'shippingFallback'  => self::notice_context_for_area( 'shipping', array() ),
+					'payment'           => self::notice_context_for_area( 'payment' ),
+					'cart'              => self::notice_context_for_area( 'cart' ),
+					'checkout'          => self::notice_context_for_area( 'checkout' ),
+				),
 			)
 		);
+	}
+
+	/**
+	 * Map a notice area to a rendered WooCommerce block notice context.
+	 *
+	 * Shipping uses wc/checkout/shipping-methods. If that container is not
+	 * among $available_contexts, fall back to wc/checkout. Payments stay on
+	 * wc/checkout/payments.
+	 *
+	 * @param string     $area                shipping, payment, cart, or checkout.
+	 * @param array|null $available_contexts  Rendered notice contexts, or null to assume defaults.
+	 * @return string
+	 */
+	public static function notice_context_for_area( $area, $available_contexts = null ) {
+		$area = (string) $area;
+
+		if ( 'payment' === $area ) {
+			return 'wc/checkout/payments';
+		}
+
+		if ( 'cart' === $area ) {
+			return 'wc/cart';
+		}
+
+		if ( 'shipping' === $area ) {
+			$preferred = 'wc/checkout/shipping-methods';
+			if ( is_array( $available_contexts ) && ! in_array( $preferred, $available_contexts, true ) ) {
+				return 'wc/checkout';
+			}
+
+			return $preferred;
+		}
+
+		return 'wc/checkout';
 	}
 
 	/**

@@ -266,9 +266,9 @@ class Oli_CSP_Restriction_Handler {
 	 * @return string
 	 */
 	public static function build_notice_container_html( $messages, $context = 'checkout' ) {
-		$class    = ( 'cart' === $context ) ? 'oli-csp-cart-notices' : 'oli-csp-checkout-notices';
-		$html     = '<div class="' . self::escape_html_value( $class ) . '">';
-		$seen     = array();
+		$class = ( 'cart' === $context ) ? 'oli-csp-cart-notices' : 'oli-csp-checkout-notices';
+		$html  = '<div class="' . self::escape_html_value( $class ) . '">';
+		$seen  = array();
 
 		foreach ( (array) $messages as $message ) {
 			$message = (string) $message;

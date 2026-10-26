@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-10-26
+
+### Added
+- Rules UI under WooCommerce > Settings > Restrictions with AND groups and OR between groups
+- Condition fields for every supported type (cart totals, weight, quantity, catalog, location, customer, coupon)
+- Disable a shipping method type or a specific zone method
+- Per-rule checkout notices on classic checkout and the checkout block
+- Dedicated checkout-notice rules that do not hide methods or gateways
+- Evaluation snapshot API so PHPUnit can cover rule evaluation without WooCommerce
+- Cart/checkout blocks compatibility declaration
+
+### Changed
+- Plugin URI is now the GitHub repository; Author URI is https://github.com/olivierbigras
+- Dependency admin notices appear only on the Plugins screen
+- Location, role, coupon, and catalog conditions honor in / not_in operators
+- PHPCS ruleset uses WordPress-Extra
+- Distributable ZIP includes CHANGELOG.md
+
+### Fixed
+- Empty condition groups no longer make an OR rule match by accident
+
 ## 2026-10-23
 
 ### Modifié
@@ -128,6 +149,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - No external API calls or tracking
 - Clean, documented code following WordPress coding standards
 
+[0.2.0]: https://github.com/olivierbigras/Oli-Conditional-Shipping-Payments/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/olivierbigras/Oli-Conditional-Shipping-Payments/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/olivierbigras/Oli-Conditional-Shipping-Payments/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/olivierbigras/Oli-Conditional-Shipping-Payments/releases/tag/v0.1.0

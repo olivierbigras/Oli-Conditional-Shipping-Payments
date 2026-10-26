@@ -21,8 +21,19 @@
 	border-left: 4px solid #2271b1;
 }
 
-.oli-csp-restriction-row h5 {
-	margin-top: 0;
+.oli-csp-restriction-summary {
+	cursor: pointer;
+	font-weight: 600;
+	list-style: none;
+}
+
+.oli-csp-restriction-summary::-webkit-details-marker {
+	display: none;
+}
+
+.oli-csp-restriction-row h5,
+.oli-csp-restriction-row h6 {
+	margin: 16px 0 8px;
 }
 
 .oli-csp-restriction-row label {
@@ -32,8 +43,15 @@
 }
 
 .oli-csp-restriction-row select,
-.oli-csp-restriction-row textarea {
+.oli-csp-restriction-row textarea,
+.oli-csp-restriction-row input[type="text"],
+.oli-csp-restriction-row input[type="number"] {
 	margin-bottom: 10px;
+}
+
+.oli-csp-field .description {
+	display: block;
+	margin-top: 4px;
 }
 
 .oli-csp-add-restriction {
@@ -50,6 +68,65 @@
 	background: #b32d2e;
 	color: #fff;
 	border-color: #b32d2e;
+}
+
+.oli-csp-condition-builder {
+	margin-top: 16px;
+	padding-top: 8px;
+	border-top: 1px solid #eee;
+}
+
+.oli-csp-condition-group {
+	margin: 12px 0;
+	padding: 12px;
+	background: #f6f7f7;
+	border: 1px dashed #c3c4c7;
+}
+
+.oli-csp-and-label,
+.oli-csp-or-separator {
+	margin: 8px 0;
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: #50575e;
+}
+
+.oli-csp-or-separator {
+	text-align: center;
+}
+
+.oli-csp-condition {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center;
+	margin: 8px 0;
+}
+
+.oli-csp-condition-type,
+.oli-csp-condition-operator {
+	min-width: 160px;
+}
+
+.oli-csp-condition-value {
+	flex: 1 1 220px;
+	min-width: 180px;
+}
+
+.oli-csp-condition-value .select2-container,
+.oli-csp-condition-value select,
+.oli-csp-condition-value input,
+.oli-csp-condition-value textarea {
+	width: 100%;
+	max-width: 100%;
+	margin-bottom: 0;
+}
+
+.oli-csp-remove-condition,
+.oli-csp-remove-group {
+	color: #b32d2e;
 }
 
 .oli-csp-product-restrictions {
@@ -94,3 +171,6 @@
 	width: 50%;
 }
 
+.oli-csp-templates {
+	display: none;
+}

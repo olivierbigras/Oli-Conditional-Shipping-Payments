@@ -30,6 +30,20 @@ class Oli_CSP_Store_API_Integration {
 		$this->condition_engine = $condition_engine;
 
 		add_action( 'woocommerce_store_api_checkout_update_order_from_request', array( $this, 'validate_restrictions' ), 10, 2 );
+		add_action( 'woocommerce_store_api_cart_update_customer_from_request', array( $this, 'add_checkout_notices' ), 20, 2 );
+	}
+
+	/**
+	 * Surface matching restriction notices on the checkout block.
+	 *
+	 * @param WC_Cart|mixed   $cart    Cart object.
+	 * @param WP_REST_Request $request Request object.
+	 */
+	public function add_checkout_notices( $cart, $request ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
+		$handler = oli_csp()->restriction_handler;
+		if ( $handler ) {
+			$handler->maybe_add_runtime_notices();
+		}
 	}
 
 	/**

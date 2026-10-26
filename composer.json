@@ -1,6 +1,6 @@
 {
   "name": "olivierbigras/oli-conditional-shipping-payments",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "Oli Conditional Shipping and Payments for WooCommerce",
   "scripts": {
     "test": "phpunit",

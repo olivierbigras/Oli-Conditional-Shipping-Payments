@@ -2,7 +2,7 @@
 /**
  * Admin Settings class.
  *
- * Handles the WooCommerce settings tab for restrictions.
+ * WooCommerce settings tab for restriction rules.
  *
  * @package Oli_Conditional_Shipping_Payments
  */
@@ -15,9 +15,20 @@ defined( 'ABSPATH' ) || exit;
 class Oli_CSP_Admin_Settings {
 
 	/**
-	 * Constructor.
+	 * Rule UI renderer.
+	 *
+	 * @var Oli_CSP_Admin_Rule_UI
 	 */
-	public function __construct() {
+	private $rule_ui;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param Oli_CSP_Admin_Rule_UI $rule_ui Rule UI renderer.
+	 */
+	public function __construct( $rule_ui ) {
+		$this->rule_ui = $rule_ui;
+
 		add_filter( 'woocommerce_settings_tabs_array', array( $this, 'add_settings_tab' ), 50 );
 		add_action( 'woocommerce_settings_tabs_restrictions', array( $this, 'output_settings' ) );
 		add_action( 'woocommerce_settings_save_restrictions', array( $this, 'save_settings' ) );
@@ -41,11 +52,33 @@ class Oli_CSP_Admin_Settings {
 	 * Output settings page.
 	 */
 	public function output_settings() {
-		global $current_section;
+		$this->output_import_report();
+		$this->output_admin_notices();
+		$this->output_restrictions_settings();
+	}
 
-		if ( '' === $current_section ) {
-			$this->output_import_report();
-			$this->output_restrictions_settings();
+	/**
+	 * Notices that belong on this plugin screen only.
+	 */
+	private function output_admin_notices() {
+		if ( empty( $_GET['imported'] ) && empty( $_GET['error'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			return;
+		}
+
+		$error = isset( $_GET['error'] ) ? sanitize_key( wp_unslash( $_GET['error'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+
+		if ( 'no_file' === $error ) {
+			echo '<div class="notice notice-error"><p>' . esc_html__( 'Please choose a JSON file to import.', 'oli-conditional-shipping-payments' ) . '</p></div>';
+			return;
+		}
+
+		if ( 'invalid_json' === $error ) {
+			echo '<div class="notice notice-error"><p>' . esc_html__( 'The uploaded file is not valid JSON.', 'oli-conditional-shipping-payments' ) . '</p></div>';
+			return;
+		}
+
+		if ( ! empty( $_GET['imported'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			echo '<div class="notice notice-success"><p>' . esc_html__( 'Restrictions imported.', 'oli-conditional-shipping-payments' ) . '</p></div>';
 		}
 	}
 
@@ -86,10 +119,18 @@ class Oli_CSP_Admin_Settings {
 	private function output_restrictions_settings() {
 		$restrictions = get_option( 'oli_csp_global_restrictions', array() );
 		$settings     = get_option( 'oli_csp_settings', array() );
+		$types        = Oli_CSP_Utils::get_restriction_types();
 
+		if ( ! is_array( $restrictions ) ) {
+			$restrictions = array();
+		}
+		if ( ! is_array( $settings ) ) {
+			$settings = array();
+		}
 		?>
 		<h2><?php esc_html_e( 'Conditional Shipping and Payments', 'oli-conditional-shipping-payments' ); ?></h2>
-		
+		<p><?php esc_html_e( 'Hide shipping methods, payment gateways, or destinations when cart, customer, or location conditions match. Conditions in a group use AND; groups use OR.', 'oli-conditional-shipping-payments' ); ?></p>
+
 		<table class="form-table">
 			<tbody>
 				<tr valign="top">
@@ -116,7 +157,7 @@ class Oli_CSP_Admin_Settings {
 					</th>
 					<td class="forminp">
 						<textarea id="oli_csp_notice_cart" name="oli_csp_settings[restriction_notice_cart]" rows="3" cols="50" class="input-text wide-input"><?php echo esc_textarea( isset( $settings['restriction_notice_cart'] ) ? $settings['restriction_notice_cart'] : '' ); ?></textarea>
-						<p class="description"><?php esc_html_e( 'Notice shown on cart page when restrictions apply.', 'oli-conditional-shipping-payments' ); ?></p>
+						<p class="description"><?php esc_html_e( 'Fallback notice on the cart when a rule matches and that rule has no custom notice.', 'oli-conditional-shipping-payments' ); ?></p>
 					</td>
 				</tr>
 				<tr valign="top">
@@ -125,22 +166,24 @@ class Oli_CSP_Admin_Settings {
 					</th>
 					<td class="forminp">
 						<textarea id="oli_csp_notice_checkout" name="oli_csp_settings[restriction_notice_checkout]" rows="3" cols="50" class="input-text wide-input"><?php echo esc_textarea( isset( $settings['restriction_notice_checkout'] ) ? $settings['restriction_notice_checkout'] : '' ); ?></textarea>
-						<p class="description"><?php esc_html_e( 'Notice shown on checkout page when restrictions apply.', 'oli-conditional-shipping-payments' ); ?></p>
+						<p class="description"><?php esc_html_e( 'Fallback notice on classic and block checkout when a rule matches and that rule has no custom notice.', 'oli-conditional-shipping-payments' ); ?></p>
 					</td>
 				</tr>
 			</tbody>
 		</table>
 
-		<h3><?php esc_html_e( 'Global Restrictions', 'oli-conditional-shipping-payments' ); ?></h3>
-		
+		<h3><?php esc_html_e( 'Rules', 'oli-conditional-shipping-payments' ); ?></h3>
+
 		<div class="oli-csp-restrictions-wrapper">
-			<?php $this->output_restriction_section( 'shipping_methods', __( 'Shipping Method Restrictions', 'oli-conditional-shipping-payments' ), $restrictions ); ?>
-			<?php $this->output_restriction_section( 'payment_gateways', __( 'Payment Gateway Restrictions', 'oli-conditional-shipping-payments' ), $restrictions ); ?>
-			<?php $this->output_restriction_section( 'shipping_destinations', __( 'Shipping Destination Restrictions', 'oli-conditional-shipping-payments' ), $restrictions ); ?>
+			<?php foreach ( $types as $type => $title ) : ?>
+				<?php $this->output_restriction_section( $type, $title, $restrictions ); ?>
+			<?php endforeach; ?>
 		</div>
 
+		<?php $this->rule_ui->render_templates( 'oli_csp_restrictions' ); ?>
+
 		<h3><?php esc_html_e( 'Import/Export', 'oli-conditional-shipping-payments' ); ?></h3>
-		
+
 		<table class="form-table">
 			<tbody>
 				<tr valign="top">
@@ -179,7 +222,7 @@ class Oli_CSP_Admin_Settings {
 						<button type="submit" class="button" name="action" value="oli_csp_import_official" formaction="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" formmethod="post">
 							<?php esc_html_e( 'Import from Official Extension', 'oli-conditional-shipping-payments' ); ?>
 						</button>
-						<p class="description"><?php esc_html_e( 'Import restrictions from WooCommerce Conditional Shipping and Payments extension.', 'oli-conditional-shipping-payments' ); ?></p>
+						<p class="description"><?php esc_html_e( 'Import restrictions from WooCommerce Conditional Shipping and Payments.', 'oli-conditional-shipping-payments' ); ?></p>
 					</td>
 				</tr>
 			</tbody>
@@ -190,8 +233,8 @@ class Oli_CSP_Admin_Settings {
 	/**
 	 * Output a restriction section.
 	 *
-	 * @param string $type Restriction type.
-	 * @param string $title Section title.
+	 * @param string $type         Restriction type.
+	 * @param string $title        Section title.
 	 * @param array  $restrictions All restrictions.
 	 */
 	private function output_restriction_section( $type, $title, $restrictions ) {
@@ -201,137 +244,17 @@ class Oli_CSP_Admin_Settings {
 			<h4><?php echo esc_html( $title ); ?></h4>
 			<div class="oli-csp-restrictions-list">
 				<?php
-				if ( ! empty( $type_restrictions ) ) {
+				if ( ! empty( $type_restrictions ) && is_array( $type_restrictions ) ) {
 					foreach ( $type_restrictions as $index => $restriction ) {
-						$this->output_restriction_row( $type, $index, $restriction );
+						$this->rule_ui->render_restriction_row( $type, $index, $restriction, 'oli_csp_restrictions' );
 					}
 				}
 				?>
 			</div>
 			<button type="button" class="button oli-csp-add-restriction" data-type="<?php echo esc_attr( $type ); ?>">
-				<?php esc_html_e( 'Add Restriction', 'oli-conditional-shipping-payments' ); ?>
-			</button>
-			<template class="oli-csp-restriction-template">
-				<?php $this->output_restriction_row( $type, '__index__', array() ); ?>
-			</template>
-		</div>
-		<?php
-	}
-
-	/**
-	 * Output a restriction row.
-	 *
-	 * @param string $type Restriction type.
-	 * @param int    $index Restriction index.
-	 * @param array  $restriction Restriction data.
-	 */
-	private function output_restriction_row( $type, $index, $restriction ) {
-		?>
-		<div class="oli-csp-restriction-row">
-			<h5>
-				<?php
-				echo esc_html(
-					sprintf(
-						/* translators: %d: restriction number */
-						__( 'Restriction #%d', 'oli-conditional-shipping-payments' ),
-						(int) $index + 1
-					)
-				);
-				?>
-			</h5>
-			
-			<?php
-			// Output excluded items based on type.
-			switch ( $type ) {
-				case 'shipping_methods':
-					$this->output_shipping_method_selector( $type, $index, $restriction );
-					break;
-				case 'payment_gateways':
-					$this->output_payment_gateway_selector( $type, $index, $restriction );
-					break;
-				case 'shipping_destinations':
-					$this->output_destination_selector( $type, $index, $restriction );
-					break;
-			}
-			?>
-
-			<h6><?php esc_html_e( 'Conditions (all must match)', 'oli-conditional-shipping-payments' ); ?></h6>
-			<p class="description"><?php esc_html_e( 'Leave empty to apply restriction always.', 'oli-conditional-shipping-payments' ); ?></p>
-			
-			<button type="button" class="button button-secondary oli-csp-remove-restriction">
-				<?php esc_html_e( 'Remove Restriction', 'oli-conditional-shipping-payments' ); ?>
+				<?php esc_html_e( 'Add Rule', 'oli-conditional-shipping-payments' ); ?>
 			</button>
 		</div>
-		<?php
-	}
-
-	/**
-	 * Output shipping method selector.
-	 *
-	 * @param string $type Restriction type.
-	 * @param int    $index Restriction index.
-	 * @param array  $restriction Restriction data.
-	 */
-	private function output_shipping_method_selector( $type, $index, $restriction ) {
-		$excluded_methods = isset( $restriction['excluded_methods'] ) ? $restriction['excluded_methods'] : array();
-		$shipping_methods = WC()->shipping()->get_shipping_methods();
-		?>
-		<label><?php esc_html_e( 'Exclude Shipping Methods', 'oli-conditional-shipping-payments' ); ?></label>
-		<select name="oli_csp_restrictions[<?php echo esc_attr( $type ); ?>][<?php echo esc_attr( $index ); ?>][excluded_methods][]" multiple class="wc-enhanced-select oli-csp-select-wide">
-			<?php foreach ( $shipping_methods as $method_id => $method ) : ?>
-				<option value="<?php echo esc_attr( $method_id ); ?>" <?php selected( in_array( $method_id, $excluded_methods, true ) ); ?>>
-					<?php echo esc_html( $method->get_method_title() ); ?>
-				</option>
-			<?php endforeach; ?>
-		</select>
-		<?php
-	}
-
-	/**
-	 * Output payment gateway selector.
-	 *
-	 * @param string $type Restriction type.
-	 * @param int    $index Restriction index.
-	 * @param array  $restriction Restriction data.
-	 */
-	private function output_payment_gateway_selector( $type, $index, $restriction ) {
-		$excluded_gateways = isset( $restriction['excluded_gateways'] ) ? $restriction['excluded_gateways'] : array();
-		$payment_gateways  = WC()->payment_gateways()->payment_gateways();
-		?>
-		<label><?php esc_html_e( 'Exclude Payment Gateways', 'oli-conditional-shipping-payments' ); ?></label>
-		<select name="oli_csp_restrictions[<?php echo esc_attr( $type ); ?>][<?php echo esc_attr( $index ); ?>][excluded_gateways][]" multiple class="wc-enhanced-select oli-csp-select-wide">
-			<?php foreach ( $payment_gateways as $gateway_id => $gateway ) : ?>
-				<option value="<?php echo esc_attr( $gateway_id ); ?>" <?php selected( in_array( $gateway_id, $excluded_gateways, true ) ); ?>>
-					<?php echo esc_html( $gateway->get_title() ); ?>
-				</option>
-			<?php endforeach; ?>
-		</select>
-		<?php
-	}
-
-	/**
-	 * Output destination selector.
-	 *
-	 * @param string $type Restriction type.
-	 * @param int    $index Restriction index.
-	 * @param array  $restriction Restriction data.
-	 */
-	private function output_destination_selector( $type, $index, $restriction ) {
-		$excluded_countries = isset( $restriction['excluded_countries'] ) ? $restriction['excluded_countries'] : array();
-		$message            = isset( $restriction['message'] ) ? $restriction['message'] : '';
-		$countries          = WC()->countries->get_countries();
-		?>
-		<label><?php esc_html_e( 'Exclude Countries', 'oli-conditional-shipping-payments' ); ?></label>
-		<select name="oli_csp_restrictions[<?php echo esc_attr( $type ); ?>][<?php echo esc_attr( $index ); ?>][excluded_countries][]" multiple class="wc-enhanced-select oli-csp-select-wide">
-			<?php foreach ( $countries as $country_code => $country_name ) : ?>
-				<option value="<?php echo esc_attr( $country_code ); ?>" <?php selected( in_array( $country_code, $excluded_countries, true ) ); ?>>
-					<?php echo esc_html( $country_name ); ?>
-				</option>
-			<?php endforeach; ?>
-		</select>
-		<br /><br />
-		<label><?php esc_html_e( 'Restriction Message', 'oli-conditional-shipping-payments' ); ?></label>
-		<textarea name="oli_csp_restrictions[<?php echo esc_attr( $type ); ?>][<?php echo esc_attr( $index ); ?>][message]" rows="2" class="large-text"><?php echo esc_textarea( $message ); ?></textarea>
 		<?php
 	}
 
@@ -343,12 +266,10 @@ class Oli_CSP_Admin_Settings {
 			return;
 		}
 
-		// Verify nonce.
 		if ( ! isset( $_POST['_wpnonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ), 'woocommerce-settings' ) ) {
 			return;
 		}
 
-		// Save general settings.
 		if ( isset( $_POST['oli_csp_settings'] ) ) {
 			$settings = array();
 
@@ -360,10 +281,11 @@ class Oli_CSP_Admin_Settings {
 			update_option( 'oli_csp_settings', $settings );
 		}
 
-		// Save restrictions.
 		if ( isset( $_POST['oli_csp_restrictions'] ) ) {
 			$restrictions = Oli_CSP_Utils::sanitize_restriction_data( wp_unslash( $_POST['oli_csp_restrictions'] ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized in Oli_CSP_Utils::sanitize_restriction_data().
 			update_option( 'oli_csp_global_restrictions', $restrictions );
+		} else {
+			update_option( 'oli_csp_global_restrictions', array() );
 		}
 	}
 
@@ -383,7 +305,7 @@ class Oli_CSP_Admin_Settings {
 		header( 'Content-Disposition: attachment; filename="oli-csp-restrictions-' . gmdate( 'Y-m-d' ) . '.json"' );
 		header( 'Pragma: no-cache' );
 
-		echo $json; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		echo $json; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON download body.
 		exit;
 	}
 
@@ -472,7 +394,6 @@ class Oli_CSP_Admin_Settings {
 		$importer = new Oli_CSP_Importer();
 		$report   = $importer->import_from_official_extension( $dry_run );
 
-		// Store report in transient for display.
 		set_transient( 'oli_csp_import_report', $report, 60 );
 
 		wp_safe_redirect(

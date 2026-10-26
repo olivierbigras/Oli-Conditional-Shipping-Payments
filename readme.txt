@@ -4,7 +4,7 @@ Tags: woocommerce, shipping, payment, conditional, restrictions
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 0.1.2
+Stable tag: 0.2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 WC requires at least: 9.0
@@ -32,7 +32,7 @@ Oli Conditional Shipping and Payments for WooCommerce allows you to create power
 
 **Powerful Condition Engine:**
 
-The plugin supports 22 different condition types. Conditions inside a group use AND logic; multiple groups use OR logic:
+The plugin supports 22 different condition types. Build rules in WooCommerce > Settings > Restrictions. Conditions inside a group use AND logic; multiple groups use OR logic:
 
 * Cart Total, Cart Subtotal, Order Total
 * Product in Cart, Category in Cart, Tag in Cart
@@ -102,14 +102,15 @@ Yes! Edit any product and scroll down to the "Product-Specific Restrictions" sec
 
 No. All rules are stored and evaluated on your site. See the External services section.
 
-== Screenshots ==
-
-1. Global restrictions settings page
-2. Shipping method restrictions with conditions
-3. Product-specific restrictions
-4. Import/Export interface
-
 == Changelog ==
+
+= 0.2.0 - 2026-10-26 =
+* Rules UI under WooCommerce > Settings > Restrictions with AND/OR condition groups
+* Disable shipping methods or zone methods, payment gateways, and destinations
+* Per-rule checkout notices on classic and block checkout
+* Operators for location, role, coupon, and catalog conditions
+* Standalone PHPUnit coverage for rule evaluation
+* Plugin URI and Author URI are now distinct; Author URI is https://github.com/olivierbigras
 
 = 0.1.2 - 2026-10-21 =
 * WordPress.org readiness: External services section, GPLv2 LICENSE, uninstall cleanup
@@ -140,6 +141,9 @@ No. All rules are stored and evaluated on your site. See the External services s
 
 == Upgrade Notice ==
 
+= 0.2.0 =
+Adds the AND/OR rules UI, per-rule checkout notices, and zone-method targeting.
+
 = 0.1.2 =
 WordPress.org readiness: no external services, uninstall cleanup, and safer admin sanitization. Existing oli_csp_* settings are kept.
 
@@ -154,6 +158,11 @@ Initial release of Oli Conditional Shipping and Payments for WooCommerce.
 This plugin does not collect, store, or transmit personal data to any third party. Restriction rules and settings are stored in your WordPress database (`oli_csp_*` options and optional `_oli_csp_restrictions` product meta). Uninstalling the plugin removes those options, the version flag, and product meta.
 
 == Additional Info ==
+
+Author: Olivier Bigras
+Author URI: https://github.com/olivierbigras
+Plugin URI: https://github.com/olivierbigras/Oli-Conditional-Shipping-Payments
+Email: oli@olivierbigras.com
 
 **Compatibility:**
 

@@ -147,7 +147,15 @@ class Oli_CSP_Admin_Rule_UI {
 		}
 
 		if ( empty( $groups ) ) {
-			$groups = array( array( array( 'type' => 'cart_subtotal', 'operator' => '>=', 'value' => '' ) ) );
+			$groups = array(
+				array(
+					array(
+						'type'     => 'cart_subtotal',
+						'operator' => '>=',
+						'value'    => '',
+					),
+				),
+			);
 			$empty  = true;
 		} else {
 			$empty = false;
@@ -182,7 +190,13 @@ class Oli_CSP_Admin_Rule_UI {
 	 */
 	public function render_condition_group( $prefix, $group_index, $conditions ) {
 		if ( empty( $conditions ) || ! is_array( $conditions ) ) {
-			$conditions = array( array( 'type' => 'cart_subtotal', 'operator' => '>=', 'value' => '' ) );
+			$conditions = array(
+				array(
+					'type'     => 'cart_subtotal',
+					'operator' => '>=',
+					'value'    => '',
+				),
+			);
 		}
 		?>
 		<div class="oli-csp-condition-group" data-group="<?php echo esc_attr( (string) $group_index ); ?>">
@@ -435,6 +449,7 @@ class Oli_CSP_Admin_Rule_UI {
 				'or'               => __( 'OR', 'oli-conditional-shipping-payments' ),
 				'searchProduct'    => __( 'Search for a product…', 'oli-conditional-shipping-payments' ),
 				'postcodeHint'     => __( 'One value per line. Wildcards (*) and ranges (1000-1099) allowed.', 'oli-conditional-shipping-payments' ),
+				/* translators: %d: restriction number */
 				'restrictionLabel' => __( 'Restriction #%d', 'oli-conditional-shipping-payments' ),
 			),
 		);
@@ -462,8 +477,8 @@ class Oli_CSP_Admin_Rule_UI {
 			return $choices;
 		}
 
-		$zones = WC_Shipping_Zones::get_zones();
-		$raw   = new WC_Shipping_Zone( 0 );
+		$zones    = WC_Shipping_Zones::get_zones();
+		$raw      = new WC_Shipping_Zone( 0 );
 		$zones[0] = array(
 			'id'               => 0,
 			'zone_name'        => $raw->get_zone_name(),

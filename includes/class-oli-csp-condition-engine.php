@@ -47,10 +47,10 @@ class Oli_CSP_Condition_Engine {
 	 * @return bool
 	 */
 	public function evaluate_with_data( $condition_groups, $data, $context = 'checkout' ) {
-		$previous                = $this->evaluation_data;
-		$this->evaluation_data   = is_array( $data ) ? $data : array();
-		$result                  = $this->evaluate_condition_groups( $condition_groups, $context );
-		$this->evaluation_data   = $previous;
+		$previous              = $this->evaluation_data;
+		$this->evaluation_data = is_array( $data ) ? $data : array();
+		$result                = $this->evaluate_condition_groups( $condition_groups, $context );
+		$this->evaluation_data = $previous;
 		return $result;
 	}
 

@@ -215,11 +215,11 @@ class Oli_CSP_Store_API_Integration {
 			array(
 				'namespace' => self::EXTENSION_NAMESPACE,
 				'contexts'  => array(
-					'shipping'          => self::notice_context_for_area( 'shipping', array( 'wc/checkout/shipping-methods' ) ),
-					'shippingFallback'  => self::notice_context_for_area( 'shipping', array() ),
-					'payment'           => self::notice_context_for_area( 'payment' ),
-					'cart'              => self::notice_context_for_area( 'cart' ),
-					'checkout'          => self::notice_context_for_area( 'checkout' ),
+					'shipping'         => self::notice_context_for_area( 'shipping', array( 'wc/checkout/shipping-methods' ) ),
+					'shippingFallback' => self::notice_context_for_area( 'shipping', array() ),
+					'payment'          => self::notice_context_for_area( 'payment' ),
+					'cart'             => self::notice_context_for_area( 'cart' ),
+					'checkout'         => self::notice_context_for_area( 'checkout' ),
 				),
 			)
 		);

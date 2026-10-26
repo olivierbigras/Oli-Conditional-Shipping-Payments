@@ -4,7 +4,7 @@ Tags: woocommerce, shipping, payment, conditional, restrictions
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 0.2.2
+Stable tag: 0.2.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 WC requires at least: 9.0
@@ -104,6 +104,9 @@ No. All rules are stored and evaluated on your site. See the External services s
 
 == Changelog ==
 
+= 0.2.3 - 2026-10-26 =
+* Announce each new checkout-block restriction notice once to screen readers
+
 = 0.2.2 - 2026-10-26 =
 * Show shipping restriction notices on the checkout block in wc/checkout/shipping-methods (fallback wc/checkout)
 
@@ -148,6 +151,9 @@ No. All rules are stored and evaluated on your site. See the External services s
 * Importer from official WooCommerce extension
 
 == Upgrade Notice ==
+
+= 0.2.3 =
+Announces new checkout-block restriction notices to screen readers once.
 
 = 0.2.2 =
 Shows shipping restriction notices on the checkout block in the shipping-methods notice area.

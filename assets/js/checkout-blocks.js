@@ -10,6 +10,7 @@
 	var NOTICE_STORE = 'core/notices';
 	var CART_STORE = 'wc/store/cart';
 	var renderedIds = [];
+	var announcedIds = {};
 	var lastKey = '';
 
 	function getConfig() {
@@ -76,6 +77,44 @@
 		return ext.notices;
 	}
 
+	function noticeSpeakKey(notice) {
+		if (!notice) {
+			return '';
+		}
+		return notice.id || ((notice.area || '') + '|' + (notice.message || ''));
+	}
+
+	function forgetStaleAnnouncements(notices) {
+		var current = {};
+		(notices || []).forEach(function (notice) {
+			var key = noticeSpeakKey(notice);
+			if (key) {
+				current[key] = true;
+			}
+		});
+		Object.keys(announcedIds).forEach(function (key) {
+			if (!current[key]) {
+				delete announcedIds[key];
+			}
+		});
+	}
+
+	function announceNoticeOnce(notice) {
+		var key = noticeSpeakKey(notice);
+		if (!key || !notice.message || announcedIds[key]) {
+			return false;
+		}
+
+		announcedIds[key] = true;
+		if (window.wp && window.wp.a11y && typeof window.wp.a11y.speak === 'function') {
+			window.wp.a11y.speak(notice.message);
+		}
+
+		return true;
+	}
+
+	window.oliCspAnnounceNoticeOnce = announceNoticeOnce;
+
 	function removeRenderedNotices(dispatcher) {
 		if (!dispatcher || typeof dispatcher.removeNotice !== 'function') {
 			renderedIds = [];
@@ -107,6 +146,7 @@
 		}
 
 		removeRenderedNotices(dispatcher);
+		forgetStaleAnnouncements(notices);
 
 		notices.forEach(function (notice) {
 			if (!notice || !notice.message) {
@@ -124,6 +164,7 @@
 				type: 'default'
 			});
 
+			announceNoticeOnce(notice);
 			renderedIds.push({ id: id, context: context });
 		});
 	}

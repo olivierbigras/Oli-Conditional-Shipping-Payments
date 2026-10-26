@@ -159,6 +159,18 @@ class Test_Oli_CSP_Checkout_Notices extends TestCase {
 	}
 
 	/**
+	 * Block checkout script depends on wp-a11y for screen-reader announcements.
+	 */
+	public function test_block_script_depends_on_wp_a11y() {
+		$deps = Oli_CSP_Store_API_Integration::checkout_script_dependencies( false );
+
+		$this->assertContains( 'wp-a11y', $deps );
+		$this->assertContains( 'wp-data', $deps );
+		$this->assertContains( 'wp-notices', $deps );
+		$this->assertNotContains( 'wc-blocks-data-store', $deps );
+	}
+
+	/**
 	 * Block renderer maps shipping to a rendered notice context.
 	 */
 	public function test_block_js_uses_rendered_shipping_notice_context() {
@@ -169,5 +181,19 @@ class Test_Oli_CSP_Checkout_Notices extends TestCase {
 		$this->assertStringContainsString( "'wc/checkout/payments'", $js );
 		$this->assertStringContainsString( "contexts.shippingFallback || 'wc/checkout'", $js );
 		$this->assertDoesNotMatchRegularExpression( "/['\"]wc\\/checkout\\/shipping['\"]/", $js );
+	}
+
+	/**
+	 * Block renderer announces each new notice once via wp.a11y.speak.
+	 */
+	public function test_block_js_announces_each_notice_once() {
+		$js = file_get_contents( dirname( __DIR__, 2 ) . '/assets/js/checkout-blocks.js' );
+
+		$this->assertNotFalse( $js );
+		$this->assertStringContainsString( 'wp.a11y.speak', $js );
+		$this->assertStringContainsString( 'announceNoticeOnce', $js );
+		$this->assertStringContainsString( 'announcedIds', $js );
+		$this->assertStringContainsString( 'forgetStaleAnnouncements', $js );
+		$this->assertStringContainsString( 'if (!key || !notice.message || announcedIds[key])', $js );
 	}
 }

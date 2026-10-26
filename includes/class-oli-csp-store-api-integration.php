@@ -196,15 +196,10 @@ class Oli_CSP_Store_API_Integration {
 			return;
 		}
 
-		$deps = array( 'wp-data', 'wp-notices' );
-		if ( function_exists( 'wp_script_is' ) && wp_script_is( 'wc-blocks-data-store', 'registered' ) ) {
-			$deps[] = 'wc-blocks-data-store';
-		}
-
 		wp_enqueue_script(
 			$handle,
 			OLI_CSP_URL . 'assets/js/checkout-blocks.js',
-			$deps,
+			self::checkout_script_dependencies(),
 			OLI_CSP_VERSION,
 			true
 		);
@@ -223,6 +218,22 @@ class Oli_CSP_Store_API_Integration {
 				),
 			)
 		);
+	}
+
+	/**
+	 * Script dependencies for the checkout-block notice renderer.
+	 *
+	 * @param bool $include_cart_store Whether to add wc-blocks-data-store when registered.
+	 * @return array
+	 */
+	public static function checkout_script_dependencies( $include_cart_store = true ) {
+		$deps = array( 'wp-data', 'wp-notices', 'wp-a11y' );
+
+		if ( $include_cart_store && function_exists( 'wp_script_is' ) && wp_script_is( 'wc-blocks-data-store', 'registered' ) ) {
+			$deps[] = 'wc-blocks-data-store';
+		}
+
+		return $deps;
 	}
 
 	/**

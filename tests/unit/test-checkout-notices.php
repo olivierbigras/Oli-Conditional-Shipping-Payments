@@ -166,8 +166,23 @@ class Test_Oli_CSP_Checkout_Notices extends TestCase {
 
 		$this->assertContains( 'wp-a11y', $deps );
 		$this->assertContains( 'wp-data', $deps );
-		$this->assertContains( 'wp-notices', $deps );
+		$this->assertNotContains( 'wp-notices', $deps );
 		$this->assertNotContains( 'wc-blocks-data-store', $deps );
+	}
+
+	/**
+	 * Speak after the cart store settles; shipping and payment have distinct slots.
+	 */
+	public function test_notice_speak_delay_and_slots() {
+		$this->assertSame( 500, Oli_CSP_Store_API_Integration::notice_speak_delay() );
+		$this->assertContains(
+			'.wp-block-woocommerce-checkout-shipping-methods-block',
+			Oli_CSP_Store_API_Integration::notice_slot_selectors_for_area( 'shipping' )
+		);
+		$this->assertContains(
+			'.wp-block-woocommerce-checkout-payment-block',
+			Oli_CSP_Store_API_Integration::notice_slot_selectors_for_area( 'payment' )
+		);
 	}
 
 	/**
@@ -195,13 +210,14 @@ class Test_Oli_CSP_Checkout_Notices extends TestCase {
 	}
 
 	/**
-	 * Block renderer announces each new notice once; createNotice does not speak.
+	 * Block renderer announces each new notice once and never uses createNotice.
 	 */
 	public function test_block_js_announces_each_notice_once() {
 		$js = file_get_contents( dirname( __DIR__, 2 ) . '/assets/js/checkout-blocks.js' );
 
 		$this->assertNotFalse( $js );
-		$this->assertStringContainsString( 'speak: false', $js );
+		$this->assertStringNotContainsString( 'createNotice(', $js );
+		$this->assertStringContainsString( 'oli-csp-inline-notice', $js );
 		$this->assertStringContainsString( 'announceNoticeOnce', $js );
 		$this->assertStringContainsString( 'announcedIds', $js );
 		$this->assertStringContainsString( 'forgetStaleAnnouncements', $js );

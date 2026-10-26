@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.5] - 2026-10-26
+
+### Fixed
+- Block checkout no longer uses WooCommerce's notice banner (`createNotice`), which always announces politely and doubled the restriction message
+- Restriction notices render inline in the shipping and payment slots, styled like WooCommerce notices
+- The plugin announces each restriction once with `wp.a11y.speak` after the cart store and shipping rates stay stable for 500 ms, so later WooCommerce speaks cannot clear it. Shipping is assertive; payments stay polite. Classic checkout is unchanged.
+
 ## [0.2.4] - 2026-10-26
 
 ### Added
@@ -175,6 +182,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - No external API calls or tracking
 - Clean, documented code following WordPress coding standards
 
+[0.2.5]: https://github.com/olivierbigras/Oli-Conditional-Shipping-Payments/compare/v0.2.4...v0.2.5
 [0.2.4]: https://github.com/olivierbigras/Oli-Conditional-Shipping-Payments/compare/v0.2.3...v0.2.4
 [0.2.3]: https://github.com/olivierbigras/Oli-Conditional-Shipping-Payments/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/olivierbigras/Oli-Conditional-Shipping-Payments/compare/v0.2.1...v0.2.2

@@ -1,27 +1,99 @@
 /**
  * Render restriction notices from Store API cart extensions on block checkout.
  *
- * Notices are never read from the WooCommerce session.
+ * Notices are never read from the WooCommerce session and never go through
+ * WooCommerce's notice banner, which always speaks politely.
  */
 
-(function () {
+(function (root, factory) {
+	var api = factory();
+
+	if (typeof module === 'object' && module.exports) {
+		module.exports = api;
+	}
+
+	if (root) {
+		root.oliCspCheckoutBlocks = api;
+		root.oliCspNoticeContextForArea = api.contextForArea;
+		root.oliCspSpeakPolitenessForArea = api.speakPolitenessForArea;
+		root.oliCspAnnounceNoticeOnce = api.announceNoticeOnce;
+
+		if (!root.oliCspCheckoutBlocksSkipAutoStart && typeof document !== 'undefined') {
+			if (document.readyState === 'loading') {
+				document.addEventListener('DOMContentLoaded', function () {
+					api.start();
+				});
+			} else {
+				api.start();
+			}
+		}
+	}
+})(typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : this), function () {
 	'use strict';
 
-	var NOTICE_STORE = 'core/notices';
 	var CART_STORE = 'wc/store/cart';
-	var renderedIds = [];
+	var DEFAULT_SPEAK_DELAY = 500;
 	var announcedIds = {};
-	var lastKey = '';
+	var lastVisualKey = '';
+	var announceTimer = null;
+	var pendingSignature = '';
+	var started = false;
+	var unsubscribe = null;
 
 	function getConfig() {
-		return window.oliCspCheckout || { namespace: 'oli-csp' };
+		return (typeof window !== 'undefined' && window.oliCspCheckout) ? window.oliCspCheckout : { namespace: 'oli-csp' };
 	}
 
 	function getWpData() {
-		return window.wp && window.wp.data ? window.wp.data : null;
+		return (typeof window !== 'undefined' && window.wp && window.wp.data) ? window.wp.data : null;
+	}
+
+	function getSpeakDelay() {
+		var delay = getConfig().speakDelay;
+		if (typeof delay === 'number' && delay >= 0) {
+			return delay;
+		}
+		return DEFAULT_SPEAK_DELAY;
+	}
+
+	function defaultArea() {
+		if (typeof document !== 'undefined' && document.body && document.body.classList && document.body.classList.contains('woocommerce-cart')) {
+			return 'cart';
+		}
+		return 'checkout';
+	}
+
+	function slotSelectorsForArea(area) {
+		var slots = getConfig().slots || {};
+		if (slots[area] && slots[area].length) {
+			return slots[area];
+		}
+
+		if (area === 'shipping') {
+			return [
+				'.wp-block-woocommerce-checkout-shipping-methods-block',
+				'.wc-block-checkout__shipping-option',
+				'[data-block-name="woocommerce/checkout-shipping-methods-block"]'
+			];
+		}
+		if (area === 'payment') {
+			return [
+				'.wp-block-woocommerce-checkout-payment-block',
+				'.wc-block-checkout__payment-method',
+				'[data-block-name="woocommerce/checkout-payment-block"]'
+			];
+		}
+		if (area === 'cart') {
+			return ['.wp-block-woocommerce-cart', '.wc-block-cart'];
+		}
+		return ['.wp-block-woocommerce-checkout', '.wc-block-checkout'];
 	}
 
 	function hasShippingMethodsNoticeContainer() {
+		if (typeof document === 'undefined' || !document.querySelector) {
+			return false;
+		}
+
 		return !!(
 			document.querySelector('.wp-block-woocommerce-checkout-shipping-methods-block') ||
 			document.querySelector('.wc-block-checkout__shipping-option') ||
@@ -47,8 +119,6 @@
 		return contexts.checkout || 'wc/checkout';
 	}
 
-	window.oliCspNoticeContextForArea = contextForArea;
-
 	function speakPolitenessForArea(area) {
 		var speak = getConfig().speak || {};
 
@@ -59,13 +129,25 @@
 		return speak[area] || 'polite';
 	}
 
-	window.oliCspSpeakPolitenessForArea = speakPolitenessForArea;
-
-	function defaultArea() {
-		if (document.body && document.body.classList.contains('woocommerce-cart')) {
-			return 'cart';
+	function findSlot(area) {
+		if (typeof document === 'undefined' || !document.querySelector) {
+			return null;
 		}
-		return 'checkout';
+
+		var selectors = slotSelectorsForArea(area);
+		var i;
+		for (i = 0; i < selectors.length; i++) {
+			var slot = document.querySelector(selectors[i]);
+			if (slot) {
+				return slot;
+			}
+		}
+
+		if (area !== 'checkout') {
+			return findSlot('checkout');
+		}
+
+		return null;
 	}
 
 	function getExtensionNotices() {
@@ -80,13 +162,72 @@
 		}
 
 		var cart = cartStore.getCartData();
-		var namespace = getConfig().namespace;
+		var namespace = getConfig().namespace || 'oli-csp';
 		var ext = cart && cart.extensions ? cart.extensions[namespace] : null;
 		if (!ext || !ext.notices || !ext.notices.length) {
 			return [];
 		}
 
 		return ext.notices;
+	}
+
+	function getShippingRateSignature() {
+		var data = getWpData();
+		if (!data || !data.select) {
+			return '';
+		}
+
+		var cartStore = data.select(CART_STORE);
+		if (!cartStore || typeof cartStore.getCartData !== 'function') {
+			return '';
+		}
+
+		var cart = cartStore.getCartData();
+		if (!cart || typeof cart.shippingRates === 'undefined') {
+			return '';
+		}
+
+		try {
+			return JSON.stringify(cart.shippingRates);
+		} catch (e) {
+			return '';
+		}
+	}
+
+	function isCartBusy() {
+		var data = getWpData();
+		if (!data || !data.select) {
+			return false;
+		}
+
+		var cartStore = data.select(CART_STORE);
+		if (!cartStore) {
+			return false;
+		}
+
+		var checks = [
+			'isAddressLoading',
+			'isCustomerDataUpdating',
+			'hasPendingItems',
+			'isShippingRateBeingSelected',
+			'isCalculating'
+		];
+		var i;
+		for (i = 0; i < checks.length; i++) {
+			if (typeof cartStore[checks[i]] === 'function' && cartStore[checks[i]]()) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	function cartSignature(notices) {
+		return JSON.stringify({
+			notices: notices || getExtensionNotices(),
+			rates: getShippingRateSignature(),
+			busy: isCartBusy()
+		});
 	}
 
 	function noticeSpeakKey(notice) {
@@ -118,7 +259,7 @@
 		}
 
 		announcedIds[key] = true;
-		if (window.wp && window.wp.a11y && typeof window.wp.a11y.speak === 'function') {
+		if (typeof window !== 'undefined' && window.wp && window.wp.a11y && typeof window.wp.a11y.speak === 'function') {
 			var politeness = speakPolitenessForArea(notice.area || defaultArea());
 			window.wp.a11y.speak(notice.message, politeness);
 		}
@@ -126,76 +267,155 @@
 		return true;
 	}
 
-	window.oliCspAnnounceNoticeOnce = announceNoticeOnce;
-
-	function removeRenderedNotices(dispatcher) {
-		if (!dispatcher || typeof dispatcher.removeNotice !== 'function') {
-			renderedIds = [];
+	function removeInlineNotices() {
+		if (typeof document === 'undefined' || !document.querySelectorAll) {
 			return;
 		}
 
-		renderedIds.forEach(function (item) {
-			dispatcher.removeNotice(item.id, item.context);
-		});
-		renderedIds = [];
+		var nodes = document.querySelectorAll('.oli-csp-inline-notice');
+		var i;
+		for (i = 0; i < nodes.length; i++) {
+			if (nodes[i].parentNode) {
+				nodes[i].parentNode.removeChild(nodes[i]);
+			}
+		}
 	}
 
-	function syncNotices() {
-		var data = getWpData();
-		if (!data || !data.dispatch) {
+	function buildNoticeElement(notice) {
+		var wrap = document.createElement('div');
+		wrap.className = 'wc-block-components-notice-banner is-info oli-csp-inline-notice';
+		wrap.setAttribute('data-oli-csp-area', notice.area || 'checkout');
+		wrap.setAttribute('role', 'status');
+
+		var content = document.createElement('div');
+		content.className = 'wc-block-components-notice-banner__content';
+		content.textContent = notice.message;
+		wrap.appendChild(content);
+
+		return wrap;
+	}
+
+	function renderInlineNotices(notices) {
+		if (typeof document === 'undefined') {
 			return;
 		}
 
-		var notices = getExtensionNotices();
-		var key = JSON.stringify(notices) + '|' + contextForArea('shipping');
-		if (key === lastKey) {
-			return;
-		}
-		lastKey = key;
+		removeInlineNotices();
 
-		var dispatcher = data.dispatch(NOTICE_STORE);
-		if (!dispatcher || typeof dispatcher.createNotice !== 'function') {
-			return;
-		}
-
-		removeRenderedNotices(dispatcher);
-		forgetStaleAnnouncements(notices);
-
-		notices.forEach(function (notice) {
+		(notices || []).forEach(function (notice) {
 			if (!notice || !notice.message) {
 				return;
 			}
 
 			var area = notice.area || defaultArea();
-			var context = contextForArea(area);
-			var id = notice.id || ('oli-csp-' + context);
+			var slot = findSlot(area);
+			if (!slot) {
+				return;
+			}
 
-			dispatcher.createNotice('info', notice.message, {
-				id: id,
-				context: context,
-				isDismissible: true,
-				type: 'default',
-				speak: false
+			var el = buildNoticeElement({
+				id: notice.id,
+				message: notice.message,
+				area: area
 			});
 
-			announceNoticeOnce(notice);
-			renderedIds.push({ id: id, context: context });
+			if (slot.firstChild) {
+				slot.insertBefore(el, slot.firstChild);
+			} else {
+				slot.appendChild(el);
+			}
 		});
+	}
+
+	function speakReadyNotices(notices) {
+		forgetStaleAnnouncements(notices);
+		(notices || []).forEach(function (notice) {
+			if (notice && notice.message) {
+				announceNoticeOnce(notice);
+			}
+		});
+	}
+
+	function cancelAnnouncement() {
+		if (announceTimer) {
+			clearTimeout(announceTimer);
+			announceTimer = null;
+		}
+	}
+
+	function scheduleAnnouncement(notices) {
+		cancelAnnouncement();
+
+		if (isCartBusy()) {
+			return;
+		}
+
+		pendingSignature = cartSignature(notices);
+		announceTimer = setTimeout(function () {
+			announceTimer = null;
+			if (isCartBusy()) {
+				return;
+			}
+
+			var current = getExtensionNotices();
+			if (cartSignature(current) !== pendingSignature) {
+				return;
+			}
+
+			speakReadyNotices(current);
+		}, getSpeakDelay());
+	}
+
+	function syncNotices() {
+		var notices = getExtensionNotices();
+		var visualKey = JSON.stringify(notices);
+		if (visualKey !== lastVisualKey) {
+			lastVisualKey = visualKey;
+			renderInlineNotices(notices);
+		}
+
+		scheduleAnnouncement(notices);
 	}
 
 	function start() {
 		var data = getWpData();
-		if (!data || typeof data.subscribe !== 'function') {
+		if (started || !data || typeof data.subscribe !== 'function') {
 			return;
 		}
 
+		started = true;
 		syncNotices();
-		data.subscribe(syncNotices);
+		unsubscribe = data.subscribe(syncNotices);
 	}
 
-	if (document.readyState === 'loading') {
-		document.addEventListener('DOMContentLoaded', start);
-	} else {
-		start();
+	function reset() {
+		cancelAnnouncement();
+		announcedIds = {};
+		lastVisualKey = '';
+		pendingSignature = '';
+		started = false;
+		if (typeof unsubscribe === 'function') {
+			unsubscribe();
+		}
+		unsubscribe = null;
+		removeInlineNotices();
 	}
-})();
+
+	return {
+		DEFAULT_SPEAK_DELAY: DEFAULT_SPEAK_DELAY,
+		start: start,
+		reset: reset,
+		syncNotices: syncNotices,
+		scheduleAnnouncement: scheduleAnnouncement,
+		renderInlineNotices: renderInlineNotices,
+		announceNoticeOnce: announceNoticeOnce,
+		speakPolitenessForArea: speakPolitenessForArea,
+		contextForArea: contextForArea,
+		slotSelectorsForArea: slotSelectorsForArea,
+		noticeSpeakKey: noticeSpeakKey,
+		forgetStaleAnnouncements: forgetStaleAnnouncements,
+		isCartBusy: isCartBusy,
+		getExtensionNotices: getExtensionNotices,
+		getSpeakDelay: getSpeakDelay
+	};
+});

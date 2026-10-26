@@ -4,7 +4,7 @@ Tags: woocommerce, shipping, payment, conditional, restrictions
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 0.2.4
+Stable tag: 0.2.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 WC requires at least: 9.0
@@ -111,6 +111,10 @@ No. All rules are stored and evaluated on your site. See the External services s
 
 == Changelog ==
 
+= 0.2.5 - 2026-10-26 =
+* Render checkout-block restriction notices inline instead of WooCommerce's notice banner
+* Announce each restriction once after the cart store settles (assertive for shipping, polite for payments)
+
 = 0.2.4 - 2026-10-26 =
 * Announce each checkout-block notice once (createNotice speak false); shipping uses assertive
 * Add Screenshots section captions for settings, shipping rule, payment rule, and checkout notice
@@ -162,6 +166,9 @@ No. All rules are stored and evaluated on your site. See the External services s
 * Importer from official WooCommerce extension
 
 == Upgrade Notice ==
+
+= 0.2.5 =
+Shows checkout-block restriction notices inline and announces each one once after shipping rates settle.
 
 = 0.2.4 =
 Announces each checkout-block restriction notice once. Shipping notices use assertive so they are not overwritten.

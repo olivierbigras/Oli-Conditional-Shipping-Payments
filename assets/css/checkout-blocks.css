@@ -1,0 +1,15 @@
+/**
+ * Inline restriction notices on the cart and checkout blocks.
+ * Matches WooCommerce notice-banner spacing when those styles are present.
+ */
+
+.oli-csp-inline-notice.wc-block-components-notice-banner {
+	margin: 0 0 1em;
+}
+
+.oli-csp-inline-notice.wc-block-components-notice-banner.is-info {
+	padding: 1em 1.25em;
+	border-left: 4px solid #007cba;
+	background: #f0f6fc;
+	color: #1e1e1e;
+}

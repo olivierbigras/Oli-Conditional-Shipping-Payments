@@ -196,6 +196,13 @@ class Oli_CSP_Store_API_Integration {
 			return;
 		}
 
+		wp_enqueue_style(
+			$handle,
+			OLI_CSP_URL . 'assets/css/checkout-blocks.css',
+			array(),
+			OLI_CSP_VERSION
+		);
+
 		wp_enqueue_script(
 			$handle,
 			OLI_CSP_URL . 'assets/js/checkout-blocks.js',
@@ -208,19 +215,26 @@ class Oli_CSP_Store_API_Integration {
 			$handle,
 			'oliCspCheckout',
 			array(
-				'namespace' => self::EXTENSION_NAMESPACE,
-				'contexts'  => array(
+				'namespace'  => self::EXTENSION_NAMESPACE,
+				'speakDelay' => self::notice_speak_delay(),
+				'contexts'   => array(
 					'shipping'         => self::notice_context_for_area( 'shipping', array( 'wc/checkout/shipping-methods' ) ),
 					'shippingFallback' => self::notice_context_for_area( 'shipping', array() ),
 					'payment'          => self::notice_context_for_area( 'payment' ),
 					'cart'             => self::notice_context_for_area( 'cart' ),
 					'checkout'         => self::notice_context_for_area( 'checkout' ),
 				),
-				'speak'     => array(
+				'speak'      => array(
 					'shipping' => self::notice_speak_politeness_for_area( 'shipping' ),
 					'payment'  => self::notice_speak_politeness_for_area( 'payment' ),
 					'cart'     => self::notice_speak_politeness_for_area( 'cart' ),
 					'checkout' => self::notice_speak_politeness_for_area( 'checkout' ),
+				),
+				'slots'      => array(
+					'shipping' => self::notice_slot_selectors_for_area( 'shipping' ),
+					'payment'  => self::notice_slot_selectors_for_area( 'payment' ),
+					'cart'     => self::notice_slot_selectors_for_area( 'cart' ),
+					'checkout' => self::notice_slot_selectors_for_area( 'checkout' ),
 				),
 			)
 		);
@@ -233,13 +247,58 @@ class Oli_CSP_Store_API_Integration {
 	 * @return array
 	 */
 	public static function checkout_script_dependencies( $include_cart_store = true ) {
-		$deps = array( 'wp-data', 'wp-notices', 'wp-a11y' );
+		$deps = array( 'wp-data', 'wp-a11y' );
 
 		if ( $include_cart_store && function_exists( 'wp_script_is' ) && wp_script_is( 'wc-blocks-data-store', 'registered' ) ) {
 			$deps[] = 'wc-blocks-data-store';
 		}
 
 		return $deps;
+	}
+
+	/**
+	 * Milliseconds to wait after the cart store settles before speaking.
+	 *
+	 * @return int
+	 */
+	public static function notice_speak_delay() {
+		return 500;
+	}
+
+	/**
+	 * CSS selectors for the inline notice slot of an area.
+	 *
+	 * @param string $area shipping, payment, cart, or checkout.
+	 * @return array
+	 */
+	public static function notice_slot_selectors_for_area( $area ) {
+		if ( 'shipping' === $area ) {
+			return array(
+				'.wp-block-woocommerce-checkout-shipping-methods-block',
+				'.wc-block-checkout__shipping-option',
+				'[data-block-name="woocommerce/checkout-shipping-methods-block"]',
+			);
+		}
+
+		if ( 'payment' === $area ) {
+			return array(
+				'.wp-block-woocommerce-checkout-payment-block',
+				'.wc-block-checkout__payment-method',
+				'[data-block-name="woocommerce/checkout-payment-block"]',
+			);
+		}
+
+		if ( 'cart' === $area ) {
+			return array(
+				'.wp-block-woocommerce-cart',
+				'.wc-block-cart',
+			);
+		}
+
+		return array(
+			'.wp-block-woocommerce-checkout',
+			'.wc-block-checkout',
+		);
 	}
 
 	/**

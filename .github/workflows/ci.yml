@@ -91,6 +91,22 @@ jobs:
           WC_DIR: /tmp/wordpress/wp-content/plugins/woocommerce
         run: vendor/bin/phpunit -c phpunit.xml
 
+  js-test:
+    name: JS Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run JS tests
+        run: node --test tests/js/*.js
+
   plugin-check:
     name: Plugin Check
     runs-on: ubuntu-latest

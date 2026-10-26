@@ -4,7 +4,7 @@ Tags: woocommerce, shipping, payment, conditional, restrictions
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 0.2.0
+Stable tag: 0.2.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 WC requires at least: 9.0
@@ -104,6 +104,11 @@ No. All rules are stored and evaluated on your site. See the External services s
 
 == Changelog ==
 
+= 0.2.1 - 2026-10-26 =
+* Show restriction notices on the checkout block via Store API cart extensions
+* Render classic checkout notices once in a replaceable update_order_review fragment
+* Do not store restriction notices in the WooCommerce session
+
 = 0.2.0 - 2026-10-26 =
 * Rules UI under WooCommerce > Settings > Restrictions with AND/OR condition groups
 * Disable shipping methods or zone methods, payment gateways, and destinations
@@ -140,6 +145,9 @@ No. All rules are stored and evaluated on your site. See the External services s
 * Importer from official WooCommerce extension
 
 == Upgrade Notice ==
+
+= 0.2.1 =
+Fixes checkout notices: the block checkout now shows custom restriction messages, and classic checkout no longer duplicates them.
 
 = 0.2.0 =
 Adds the AND/OR rules UI, per-rule checkout notices, and zone-method targeting.

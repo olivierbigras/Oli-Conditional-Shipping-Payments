@@ -15,11 +15,23 @@ defined( 'ABSPATH' ) || exit;
 class Oli_CSP_Store_API_Integration {
 
 	/**
+	 * Store API extension namespace.
+	 */
+	const EXTENSION_NAMESPACE = 'oli-csp';
+
+	/**
 	 * Condition engine instance.
 	 *
 	 * @var Oli_CSP_Condition_Engine
 	 */
 	private $condition_engine;
+
+	/**
+	 * Whether Store API extension data was registered.
+	 *
+	 * @var bool
+	 */
+	private $store_api_registered = false;
 
 	/**
 	 * Constructor.
@@ -30,20 +42,196 @@ class Oli_CSP_Store_API_Integration {
 		$this->condition_engine = $condition_engine;
 
 		add_action( 'woocommerce_store_api_checkout_update_order_from_request', array( $this, 'validate_restrictions' ), 10, 2 );
-		add_action( 'woocommerce_store_api_cart_update_customer_from_request', array( $this, 'add_checkout_notices' ), 20, 2 );
+		add_action( 'woocommerce_blocks_loaded', array( $this, 'register_store_api_data' ) );
+		add_action( 'woocommerce_blocks_enqueue_checkout_block_scripts_after', array( $this, 'enqueue_checkout_scripts' ) );
+		add_action( 'woocommerce_blocks_enqueue_cart_block_scripts_after', array( $this, 'enqueue_checkout_scripts' ) );
+		add_action( 'wp_enqueue_scripts', array( $this, 'maybe_enqueue_checkout_scripts' ) );
+
+		if ( did_action( 'woocommerce_blocks_loaded' ) ) {
+			$this->register_store_api_data();
+		}
 	}
 
 	/**
-	 * Surface matching restriction notices on the checkout block.
-	 *
-	 * @param WC_Cart|mixed   $cart    Cart object.
-	 * @param WP_REST_Request $request Request object.
+	 * Register cart extension data so the checkout block can read notices.
 	 */
-	public function add_checkout_notices( $cart, $request ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
-		$handler = oli_csp()->restriction_handler;
-		if ( $handler ) {
-			$handler->maybe_add_runtime_notices();
+	public function register_store_api_data() {
+		if ( $this->store_api_registered || ! function_exists( 'woocommerce_store_api_register_endpoint_data' ) ) {
+			return;
 		}
+
+		if ( ! class_exists( '\Automattic\WooCommerce\StoreApi\Schemas\V1\CartSchema' ) ) {
+			return;
+		}
+
+		woocommerce_store_api_register_endpoint_data(
+			array(
+				'endpoint'        => \Automattic\WooCommerce\StoreApi\Schemas\V1\CartSchema::IDENTIFIER,
+				'namespace'       => self::EXTENSION_NAMESPACE,
+				'data_callback'   => array( $this, 'get_cart_extension_data' ),
+				'schema_callback' => array( $this, 'get_cart_extension_schema' ),
+				'schema_type'     => ARRAY_A,
+			)
+		);
+
+		$this->store_api_registered = true;
+	}
+
+	/**
+	 * Cart Store API extension payload. Never writes session notices.
+	 *
+	 * @return array
+	 */
+	public function get_cart_extension_data() {
+		$handler = function_exists( 'oli_csp' ) ? oli_csp()->restriction_handler : null;
+		$items   = ( $handler && method_exists( $handler, 'collect_notice_items' ) )
+			? $handler->collect_notice_items( 'checkout' )
+			: array();
+
+		return self::format_store_api_notices( $items );
+	}
+
+	/**
+	 * Schema for the cart extension payload.
+	 *
+	 * @return array
+	 */
+	public function get_cart_extension_schema() {
+		return array(
+			'notices' => array(
+				'description' => __( 'Restriction notices for the cart and checkout blocks.', 'oli-conditional-shipping-payments' ),
+				'type'        => 'array',
+				'context'     => array( 'view', 'edit' ),
+				'readonly'    => true,
+				'items'       => array(
+					'type'       => 'object',
+					'properties' => array(
+						'id'      => array(
+							'description' => __( 'Notice identifier.', 'oli-conditional-shipping-payments' ),
+							'type'        => 'string',
+							'context'     => array( 'view', 'edit' ),
+							'readonly'    => true,
+						),
+						'message' => array(
+							'description' => __( 'Notice text.', 'oli-conditional-shipping-payments' ),
+							'type'        => 'string',
+							'context'     => array( 'view', 'edit' ),
+							'readonly'    => true,
+						),
+						'area'    => array(
+							'description' => __( 'Checkout area: shipping, payment, checkout, or cart.', 'oli-conditional-shipping-payments' ),
+							'type'        => 'string',
+							'context'     => array( 'view', 'edit' ),
+							'readonly'    => true,
+						),
+					),
+				),
+			),
+		);
+	}
+
+	/**
+	 * Normalize notice items for the Store API (no session writes).
+	 *
+	 * @param array $items Items with message and optional area.
+	 * @return array
+	 */
+	public static function format_store_api_notices( $items ) {
+		$notices = array();
+
+		foreach ( (array) $items as $item ) {
+			if ( is_string( $item ) ) {
+				$item = array(
+					'message' => $item,
+					'area'    => 'checkout',
+				);
+			}
+
+			if ( ! is_array( $item ) ) {
+				continue;
+			}
+
+			$message = self::plain_text( isset( $item['message'] ) ? $item['message'] : '' );
+			if ( '' === $message ) {
+				continue;
+			}
+
+			$area = isset( $item['area'] ) ? $item['area'] : 'checkout';
+			if ( ! in_array( $area, array( 'shipping', 'payment', 'checkout', 'cart' ), true ) ) {
+				$area = 'checkout';
+			}
+
+			$notices[] = array(
+				'id'      => 'oli-csp-' . md5( $area . '|' . $message ),
+				'message' => $message,
+				'area'    => $area,
+			);
+		}
+
+		return array(
+			'notices' => $notices,
+		);
+	}
+
+	/**
+	 * Enqueue the checkout-block notice renderer when a cart/checkout block is present.
+	 */
+	public function maybe_enqueue_checkout_scripts() {
+		if ( ! function_exists( 'has_block' ) ) {
+			return;
+		}
+
+		if ( has_block( 'woocommerce/checkout' ) || has_block( 'woocommerce/cart' ) ) {
+			$this->enqueue_checkout_scripts();
+		}
+	}
+
+	/**
+	 * Enqueue the Store API notice renderer.
+	 */
+	public function enqueue_checkout_scripts() {
+		$handle = 'oli-csp-checkout-blocks';
+
+		if ( function_exists( 'wp_script_is' ) && wp_script_is( $handle, 'enqueued' ) ) {
+			return;
+		}
+
+		$deps = array( 'wp-data', 'wp-notices' );
+		if ( function_exists( 'wp_script_is' ) && wp_script_is( 'wc-blocks-data-store', 'registered' ) ) {
+			$deps[] = 'wc-blocks-data-store';
+		}
+
+		wp_enqueue_script(
+			$handle,
+			OLI_CSP_URL . 'assets/js/checkout-blocks.js',
+			$deps,
+			OLI_CSP_VERSION,
+			true
+		);
+
+		wp_localize_script(
+			$handle,
+			'oliCspCheckout',
+			array(
+				'namespace' => self::EXTENSION_NAMESPACE,
+			)
+		);
+	}
+
+	/**
+	 * Strip tags without requiring WordPress in unit tests.
+	 *
+	 * @param mixed $value Raw value.
+	 * @return string
+	 */
+	private static function plain_text( $value ) {
+		$value = (string) $value;
+
+		if ( function_exists( 'wp_strip_all_tags' ) ) {
+			return wp_strip_all_tags( $value );
+		}
+
+		return trim( strip_tags( $value ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.strip_tags_strip_tags -- fallback when wp_strip_all_tags is unavailable.
 	}
 
 	/**
@@ -54,13 +242,8 @@ class Oli_CSP_Store_API_Integration {
 	 * @throws Exception If restrictions are violated.
 	 */
 	public function validate_restrictions( $order, $request ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
-		// Validate shipping method restrictions.
 		$this->validate_shipping_methods( $order );
-
-		// Validate payment gateway restrictions.
 		$this->validate_payment_gateways( $order );
-
-		// Validate destination restrictions.
 		$this->validate_destinations( $order );
 	}
 
@@ -168,13 +351,11 @@ class Oli_CSP_Store_API_Integration {
 	private function get_destination_restrictions() {
 		$restrictions = array();
 
-		// Global restrictions.
 		$global_restrictions = get_option( 'oli_csp_global_restrictions', array() );
 		if ( ! empty( $global_restrictions['shipping_destinations'] ) ) {
 			$restrictions = array_merge( $restrictions, $global_restrictions['shipping_destinations'] );
 		}
 
-		// Product-specific restrictions.
 		if ( WC()->cart ) {
 			foreach ( WC()->cart->get_cart() as $cart_item ) {
 				$product_id           = $cart_item['product_id'];

@@ -22,13 +22,6 @@ class Oli_CSP_Restriction_Handler {
 	private $condition_engine;
 
 	/**
-	 * Whether runtime notices were added for this request.
-	 *
-	 * @var bool
-	 */
-	private $notices_added = false;
-
-	/**
 	 * Constructor.
 	 *
 	 * @param Oli_CSP_Condition_Engine $condition_engine Condition engine instance.
@@ -41,10 +34,9 @@ class Oli_CSP_Restriction_Handler {
 		add_filter( 'woocommerce_countries_allowed_countries', array( $this, 'filter_allowed_countries' ), 100 );
 		add_filter( 'woocommerce_countries_shipping_countries', array( $this, 'filter_shipping_countries' ), 100 );
 
-		add_action( 'woocommerce_before_cart', array( $this, 'show_cart_notice' ) );
-		add_action( 'woocommerce_before_checkout_form', array( $this, 'show_checkout_notice' ) );
-		add_action( 'woocommerce_after_calculate_totals', array( $this, 'maybe_add_runtime_notices' ), 20 );
-		add_action( 'woocommerce_store_api_cart_update_customer_from_request', array( $this, 'maybe_add_runtime_notices' ), 20 );
+		add_action( 'woocommerce_before_cart', array( $this, 'render_cart_notice_container' ), 15 );
+		add_action( 'woocommerce_before_checkout_form', array( $this, 'render_checkout_notice_container' ), 15 );
+		add_filter( 'woocommerce_update_order_review_fragments', array( $this, 'add_checkout_notice_fragment' ) );
 	}
 
 	/**
@@ -222,53 +214,98 @@ class Oli_CSP_Restriction_Handler {
 	}
 
 	/**
-	 * Show notice on cart page if restrictions apply.
+	 * Render the replaceable cart notice container (classic cart).
 	 */
-	public function show_cart_notice() {
-		$this->print_notices( 'cart' );
+	public function render_cart_notice_container() {
+		echo $this->get_notice_container_html( 'cart' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in get_notice_container_html().
 	}
 
 	/**
-	 * Show notice on classic checkout if restrictions apply.
+	 * Render the replaceable checkout notice container (classic checkout).
 	 */
-	public function show_checkout_notice() {
-		$this->print_notices( 'checkout' );
+	public function render_checkout_notice_container() {
+		echo $this->get_notice_container_html( 'checkout' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in get_notice_container_html().
 	}
 
 	/**
-	 * Add notices during Store API / totals calculation (block checkout).
+	 * Replace classic checkout notices during update_order_review.
+	 *
+	 * @param array $fragments Checkout fragments.
+	 * @return array
 	 */
-	public function maybe_add_runtime_notices() {
-		if ( $this->notices_added || ! function_exists( 'wc_add_notice' ) ) {
-			return;
+	public function add_checkout_notice_fragment( $fragments ) {
+		if ( ! is_array( $fragments ) ) {
+			$fragments = array();
 		}
 
-		$doing_rest = ( function_exists( 'WC' ) && WC() && method_exists( WC(), 'is_rest_api_request' ) && WC()->is_rest_api_request() )
-			|| ( defined( 'REST_REQUEST' ) && REST_REQUEST );
+		$fragments['.oli-csp-checkout-notices'] = $this->get_notice_container_html( 'checkout' );
 
-		if ( ! $doing_rest && ! ( function_exists( 'is_checkout' ) && is_checkout() ) && ! ( function_exists( 'is_cart' ) && is_cart() ) ) {
-			return;
+		return $fragments;
+	}
+
+	/**
+	 * HTML for the classic notice container. Never writes WooCommerce session notices.
+	 *
+	 * @param string     $context  cart or checkout.
+	 * @param array|null $messages Optional pre-collected messages.
+	 * @return string
+	 */
+	public function get_notice_container_html( $context = 'checkout', $messages = null ) {
+		if ( null === $messages ) {
+			$messages = $this->collect_notice_messages( $context );
 		}
 
-		foreach ( $this->collect_notice_messages( $doing_rest || ( function_exists( 'is_checkout' ) && is_checkout() ) ? 'checkout' : 'cart' ) as $message ) {
-			if ( function_exists( 'wc_has_notice' ) && wc_has_notice( $message, 'notice' ) ) {
+		return self::build_notice_container_html( $messages, $context );
+	}
+
+	/**
+	 * Build a replaceable notice container. Safe to call without WooCommerce.
+	 *
+	 * @param array  $messages Notice strings.
+	 * @param string $context  cart or checkout.
+	 * @return string
+	 */
+	public static function build_notice_container_html( $messages, $context = 'checkout' ) {
+		$class    = ( 'cart' === $context ) ? 'oli-csp-cart-notices' : 'oli-csp-checkout-notices';
+		$html     = '<div class="' . self::escape_html_value( $class ) . '">';
+		$seen     = array();
+
+		foreach ( (array) $messages as $message ) {
+			$message = (string) $message;
+			if ( '' === $message || isset( $seen[ $message ] ) ) {
 				continue;
 			}
-			wc_add_notice( $message, 'notice' );
+
+			$seen[ $message ] = true;
+			$html            .= '<div class="woocommerce-info" role="status">' . self::escape_html_value( $message ) . '</div>';
 		}
 
-		$this->notices_added = true;
+		$html .= '</div>';
+
+		return $html;
 	}
 
 	/**
-	 * Print collected notices for classic cart/checkout templates.
+	 * Escape HTML when WordPress helpers are available.
 	 *
-	 * @param string $context cart or checkout.
+	 * @param string $value Raw value.
+	 * @return string
 	 */
-	private function print_notices( $context ) {
-		foreach ( $this->collect_notice_messages( $context ) as $message ) {
-			wc_print_notice( $message, 'notice' );
+	private static function escape_html_value( $value ) {
+		if ( function_exists( 'esc_html' ) ) {
+			return esc_html( $value );
 		}
+
+		return htmlspecialchars( (string) $value, ENT_QUOTES, 'UTF-8' );
+	}
+
+	/**
+	 * Restriction notices are never stored in the WooCommerce session.
+	 *
+	 * @return bool
+	 */
+	public static function persist_notices_in_session() {
+		return false;
 	}
 
 	/**
@@ -279,35 +316,14 @@ class Oli_CSP_Restriction_Handler {
 	 */
 	public function collect_notice_messages( $context = 'checkout' ) {
 		$messages = array();
-		$matched  = false;
-		$types    = array( 'shipping_methods', 'payment_gateways', 'shipping_destinations', 'checkout_notices' );
 
-		foreach ( $types as $type ) {
-			foreach ( $this->get_applicable_restrictions( $type ) as $restriction ) {
-				if ( ! $this->restriction_matches( $restriction ) ) {
-					continue;
-				}
-
-				$matched = true;
-
-				if ( ! empty( $restriction['notice'] ) ) {
-					$messages[] = $restriction['notice'];
-				} elseif ( ! empty( $restriction['message'] ) ) {
-					$messages[] = $restriction['message'];
-				}
+		foreach ( $this->collect_notice_items( $context ) as $item ) {
+			if ( ! empty( $item['message'] ) ) {
+				$messages[] = (string) $item['message'];
 			}
 		}
 
-		if ( empty( $messages ) && $matched ) {
-			$settings = get_option( 'oli_csp_settings', array() );
-			$key      = ( 'cart' === $context ) ? 'restriction_notice_cart' : 'restriction_notice_checkout';
-			$fallback = isset( $settings[ $key ] ) ? $settings[ $key ] : '';
-			if ( '' !== $fallback ) {
-				$messages[] = $fallback;
-			}
-		}
-
-		$messages = array_values( array_unique( array_filter( array_map( 'strval', $messages ) ) ) );
+		$messages = array_values( array_unique( $messages ) );
 
 		/**
 		 * Filter checkout/cart restriction notices.
@@ -316,6 +332,78 @@ class Oli_CSP_Restriction_Handler {
 		 * @param string $context  cart or checkout.
 		 */
 		return apply_filters( 'oli_csp_notice_messages', $messages, $context );
+	}
+
+	/**
+	 * Collect notice items with a display area for the checkout block.
+	 *
+	 * @param string $context cart or checkout.
+	 * @return array
+	 */
+	public function collect_notice_items( $context = 'checkout' ) {
+		$items   = array();
+		$matched = false;
+		$types   = array(
+			'shipping_methods'      => 'shipping',
+			'payment_gateways'      => 'payment',
+			'shipping_destinations' => 'shipping',
+			'checkout_notices'      => 'checkout',
+		);
+
+		foreach ( $types as $type => $area ) {
+			foreach ( $this->get_applicable_restrictions( $type ) as $restriction ) {
+				if ( ! $this->restriction_matches( $restriction ) ) {
+					continue;
+				}
+
+				$matched = true;
+				$message = '';
+
+				if ( ! empty( $restriction['notice'] ) ) {
+					$message = (string) $restriction['notice'];
+				} elseif ( ! empty( $restriction['message'] ) ) {
+					$message = (string) $restriction['message'];
+				}
+
+				if ( '' !== $message ) {
+					$items[] = array(
+						'message' => $message,
+						'area'    => $area,
+					);
+				}
+			}
+		}
+
+		if ( empty( $items ) && $matched ) {
+			$settings = get_option( 'oli_csp_settings', array() );
+			$key      = ( 'cart' === $context ) ? 'restriction_notice_cart' : 'restriction_notice_checkout';
+			$fallback = isset( $settings[ $key ] ) ? (string) $settings[ $key ] : '';
+
+			if ( '' !== $fallback ) {
+				$items[] = array(
+					'message' => $fallback,
+					'area'    => ( 'cart' === $context ) ? 'cart' : 'checkout',
+				);
+			}
+		}
+
+		$unique = array();
+		foreach ( $items as $item ) {
+			$key = $item['area'] . '|' . $item['message'];
+			if ( ! isset( $unique[ $key ] ) ) {
+				$unique[ $key ] = $item;
+			}
+		}
+
+		$items = array_values( $unique );
+
+		/**
+		 * Filter structured checkout/cart restriction notices.
+		 *
+		 * @param array  $items   Notice items with message and area.
+		 * @param string $context cart or checkout.
+		 */
+		return apply_filters( 'oli_csp_notice_items', $items, $context );
 	}
 
 	/**

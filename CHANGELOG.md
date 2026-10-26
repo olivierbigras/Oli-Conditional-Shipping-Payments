@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2026-10-26
+
+### Fixed
+- Checkout block now shows custom restriction notices through Store API cart extension data and a `core/notices` renderer
+- Classic checkout prints each restriction notice once inside a fragment replaced by `update_order_review`
+- Restriction notices are no longer written to the WooCommerce session, so block requests cannot leak onto classic pages
+
 ## [0.2.0] - 2026-10-26
 
 ### Added
@@ -149,6 +156,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - No external API calls or tracking
 - Clean, documented code following WordPress coding standards
 
+[0.2.1]: https://github.com/olivierbigras/Oli-Conditional-Shipping-Payments/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/olivierbigras/Oli-Conditional-Shipping-Payments/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/olivierbigras/Oli-Conditional-Shipping-Payments/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/olivierbigras/Oli-Conditional-Shipping-Payments/compare/v0.1.0...v0.1.1

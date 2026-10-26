@@ -10,11 +10,12 @@ STAGING="$(mktemp -d)"
 DEST="${DEST_DIR}/${SLUG}-${VERSION}.zip"
 
 mkdir -p "$DEST_DIR" "$STAGING/$SLUG"
+rm -f "$DEST"
 
 if [[ -f "$ROOT/.distignore" ]]; then
-	rsync -a --exclude-from="$ROOT/.distignore" --exclude=".git" --exclude="vendor" "$ROOT"/ "$STAGING/$SLUG"/
+	rsync -a --exclude-from="$ROOT/.distignore" --exclude=".git" --exclude="vendor" --exclude=".phpunit.result.cache" --exclude=".phpunit.cache" "$ROOT"/ "$STAGING/$SLUG"/
 else
-	rsync -a --exclude=".git" --exclude="vendor" "$ROOT"/ "$STAGING/$SLUG"/
+	rsync -a --exclude=".git" --exclude="vendor" --exclude=".phpunit.result.cache" "$ROOT"/ "$STAGING/$SLUG"/
 fi
 
 # rsync --exclude-from treats patterns relative to the transfer root.

@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.4] - 2026-10-26
+
+### Fixed
+- Block checkout creates restriction notices with `speak: false` so `createNotice` does not double-announce
+- Shipping-area notices are spoken once with `wp.a11y.speak( message, 'assertive' )` so WooCommerce's later polite shipping-options message cannot replace them. Payments stay polite.
+
 ## [0.2.3] - 2026-10-26
 
 ### Fixed
@@ -166,6 +172,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - No external API calls or tracking
 - Clean, documented code following WordPress coding standards
 
+[0.2.4]: https://github.com/olivierbigras/Oli-Conditional-Shipping-Payments/compare/v0.2.3...v0.2.4
 [0.2.3]: https://github.com/olivierbigras/Oli-Conditional-Shipping-Payments/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/olivierbigras/Oli-Conditional-Shipping-Payments/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/olivierbigras/Oli-Conditional-Shipping-Payments/compare/v0.2.0...v0.2.1

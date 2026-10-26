@@ -216,6 +216,12 @@ class Oli_CSP_Store_API_Integration {
 					'cart'             => self::notice_context_for_area( 'cart' ),
 					'checkout'         => self::notice_context_for_area( 'checkout' ),
 				),
+				'speak'     => array(
+					'shipping' => self::notice_speak_politeness_for_area( 'shipping' ),
+					'payment'  => self::notice_speak_politeness_for_area( 'payment' ),
+					'cart'     => self::notice_speak_politeness_for_area( 'cart' ),
+					'checkout' => self::notice_speak_politeness_for_area( 'checkout' ),
+				),
 			)
 		);
 	}
@@ -234,6 +240,19 @@ class Oli_CSP_Store_API_Integration {
 		}
 
 		return $deps;
+	}
+
+	/**
+	 * Screen-reader politeness for a notice area.
+	 *
+	 * Shipping uses assertive so WooCommerce's later polite
+	 * "shipping option was found" message cannot clobber it.
+	 *
+	 * @param string $area shipping, payment, cart, or checkout.
+	 * @return string assertive or polite.
+	 */
+	public static function notice_speak_politeness_for_area( $area ) {
+		return 'shipping' === (string) $area ? 'assertive' : 'polite';
 	}
 
 	/**

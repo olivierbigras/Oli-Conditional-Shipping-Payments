@@ -184,16 +184,40 @@ class Test_Oli_CSP_Checkout_Notices extends TestCase {
 	}
 
 	/**
-	 * Block renderer announces each new notice once via wp.a11y.speak.
+	 * Shipping announcements are assertive; other areas stay polite.
+	 */
+	public function test_notice_speak_politeness_mapping() {
+		$this->assertSame( 'assertive', Oli_CSP_Store_API_Integration::notice_speak_politeness_for_area( 'shipping' ) );
+		$this->assertSame( 'polite', Oli_CSP_Store_API_Integration::notice_speak_politeness_for_area( 'payment' ) );
+		$this->assertSame( 'polite', Oli_CSP_Store_API_Integration::notice_speak_politeness_for_area( 'cart' ) );
+		$this->assertSame( 'polite', Oli_CSP_Store_API_Integration::notice_speak_politeness_for_area( 'checkout' ) );
+		$this->assertSame( 'polite', Oli_CSP_Store_API_Integration::notice_speak_politeness_for_area( 'unknown' ) );
+	}
+
+	/**
+	 * Block renderer announces each new notice once; createNotice does not speak.
 	 */
 	public function test_block_js_announces_each_notice_once() {
 		$js = file_get_contents( dirname( __DIR__, 2 ) . '/assets/js/checkout-blocks.js' );
 
 		$this->assertNotFalse( $js );
-		$this->assertStringContainsString( 'wp.a11y.speak', $js );
+		$this->assertStringContainsString( 'speak: false', $js );
 		$this->assertStringContainsString( 'announceNoticeOnce', $js );
 		$this->assertStringContainsString( 'announcedIds', $js );
 		$this->assertStringContainsString( 'forgetStaleAnnouncements', $js );
 		$this->assertStringContainsString( 'if (!key || !notice.message || announcedIds[key])', $js );
+		$this->assertStringContainsString( 'window.wp.a11y.speak(notice.message, politeness)', $js );
+		$this->assertSame( 1, substr_count( $js, 'wp.a11y.speak(notice.message, politeness)' ) );
+	}
+
+	/**
+	 * Shipping notices use assertive speak so polite shipping-option updates cannot clobber them.
+	 */
+	public function test_block_js_uses_assertive_speak_for_shipping() {
+		$js = file_get_contents( dirname( __DIR__, 2 ) . '/assets/js/checkout-blocks.js' );
+
+		$this->assertNotFalse( $js );
+		$this->assertStringContainsString( "return speak.shipping || 'assertive'", $js );
+		$this->assertStringContainsString( "return speak[area] || 'polite'", $js );
 	}
 }

@@ -49,6 +49,18 @@
 
 	window.oliCspNoticeContextForArea = contextForArea;
 
+	function speakPolitenessForArea(area) {
+		var speak = getConfig().speak || {};
+
+		if (area === 'shipping') {
+			return speak.shipping || 'assertive';
+		}
+
+		return speak[area] || 'polite';
+	}
+
+	window.oliCspSpeakPolitenessForArea = speakPolitenessForArea;
+
 	function defaultArea() {
 		if (document.body && document.body.classList.contains('woocommerce-cart')) {
 			return 'cart';
@@ -107,7 +119,8 @@
 
 		announcedIds[key] = true;
 		if (window.wp && window.wp.a11y && typeof window.wp.a11y.speak === 'function') {
-			window.wp.a11y.speak(notice.message);
+			var politeness = speakPolitenessForArea(notice.area || defaultArea());
+			window.wp.a11y.speak(notice.message, politeness);
 		}
 
 		return true;
@@ -161,7 +174,8 @@
 				id: id,
 				context: context,
 				isDismissible: true,
-				type: 'default'
+				type: 'default',
+				speak: false
 			});
 
 			announceNoticeOnce(notice);

@@ -106,11 +106,13 @@ jobs:
             vendor
             tests
             .github
+            bin
           exclude-files: |
             phpcs.xml.dist
             phpunit.xml
             composer.json
             .gitignore
+            bin/build-zip.sh
           slug: oli-conditional-shipping-payments
           include-experimental: false
           ignore-codes: |

@@ -238,6 +238,10 @@ class Oli_CSP_Store_API_Integration {
 				),
 			)
 		);
+
+		if ( function_exists( 'wp_set_script_translations' ) ) {
+			wp_set_script_translations( $handle, 'oli-conditional-shipping-payments', OLI_CSP_PATH . 'languages' );
+		}
 	}
 
 	/**

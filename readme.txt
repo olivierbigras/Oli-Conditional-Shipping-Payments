@@ -102,10 +102,18 @@ Yes! Edit any product and scroll down to the "Product-Specific Restrictions" sec
 
 No. All rules are stored and evaluated on your site. See the External services section.
 
+== Screenshots ==
+
+1. General settings for shipping and payment restrictions.
+2. A shipping rule with its conditions (e.g. hide a method for a postcode pattern).
+3. A payment rule (e.g. hide Cash on delivery above a cart total).
+4. The restriction notice shown to the customer at checkout.
+
 == Changelog ==
 
 = 0.2.4 - 2026-10-26 =
 * Announce each checkout-block notice once (createNotice speak false); shipping uses assertive
+* Add Screenshots section captions for settings, shipping rule, payment rule, and checkout notice
 
 = 0.2.3 - 2026-10-26 =
 * Announce each new checkout-block restriction notice once to screen readers

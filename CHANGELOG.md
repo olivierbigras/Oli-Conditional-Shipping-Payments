@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.2.4] - 2026-10-26
 
+### Added
+- `== Screenshots ==` captions in readme.txt for the settings, shipping rule, payment rule, and checkout notice screens
+
 ### Fixed
 - Block checkout creates restriction notices with `speak: false` so `createNotice` does not double-announce
 - Shipping-area notices are spoken once with `wp.a11y.speak( message, 'assertive' )` so WooCommerce's later polite shipping-options message cannot replace them. Payments stay polite.

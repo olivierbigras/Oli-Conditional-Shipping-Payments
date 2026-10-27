@@ -286,7 +286,7 @@ class Oli_CSP_Admin_Settings {
 		}
 
 		if ( isset( $_POST['oli_csp_restrictions'] ) ) {
-			$restrictions = Oli_CSP_Utils::sanitize_restriction_data( wp_unslash( $_POST['oli_csp_restrictions'] ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized in Oli_CSP_Utils::sanitize_restriction_data().
+			$restrictions = Oli_CSP_Utils::sanitize_restriction_data( map_deep( wp_unslash( $_POST['oli_csp_restrictions'] ), 'sanitize_textarea_field' ) );
 			update_option( 'oli_csp_global_restrictions', $restrictions );
 		} else {
 			update_option( 'oli_csp_global_restrictions', array() );

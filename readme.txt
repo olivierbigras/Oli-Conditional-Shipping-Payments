@@ -118,6 +118,7 @@ No. All rules are stored and evaluated on your site. See the External services s
 * The JSON export is sent with wp_send_json() instead of a raw echo.
 * The import "dry run" flag is unslashed and sanitized.
 * The product meta import query uses $wpdb->prepare() directly with a %i table placeholder.
+* Saved rules (global and per product) are unslashed and sanitized where they are read, with sanitize_textarea_field() so multi-line postcode lists keep their line breaks.
 
 = 0.2.5 - 2026-10-26 =
 * Render checkout-block restriction notices inline instead of WooCommerce's notice banner

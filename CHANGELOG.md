@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Export JSON envoyé avec wp_send_json() au lieu d'un echo brut
 - Option « dry run » de l'import lue avec wp_unslash et sanitize_text_field
 - Requête d'import des métas produit : $wpdb->prepare() direct avec le placeholder %i pour la table
+- Règles enregistrées (globales et produit) nettoyées dès la lecture avec map_deep( wp_unslash(), sanitize_textarea_field ) puis sanitize_restriction_data : les listes de codes postaux multi-lignes gardent leurs retours de ligne
 
 ## [0.2.5] - 2026-10-26
 

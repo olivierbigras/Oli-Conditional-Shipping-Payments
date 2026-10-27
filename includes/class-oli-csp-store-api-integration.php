@@ -151,7 +151,9 @@ class Oli_CSP_Store_API_Integration {
 				continue;
 			}
 
-			$message = self::plain_text( isset( $item['message'] ) ? $item['message'] : '' );
+			// Saved notices are entity-encoded by sanitize_textarea_field(); the block script renders
+			// them with textContent and wp.a11y.speak(), so send literal text (tags already stripped).
+			$message = self::decode_text( self::plain_text( isset( $item['message'] ) ? $item['message'] : '' ) );
 			if ( '' === $message ) {
 				continue;
 			}
@@ -366,6 +368,24 @@ class Oli_CSP_Store_API_Integration {
 		}
 
 		return trim( strip_tags( $value ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.strip_tags_strip_tags -- fallback when wp_strip_all_tags is unavailable.
+	}
+
+	/**
+	 * Decode the HTML special characters stored by sanitize_textarea_field() (&lt; &gt; &amp; quotes).
+	 *
+	 * Only for values rendered as text (textContent / speak), never as HTML.
+	 *
+	 * @since 0.2.7
+	 *
+	 * @param string $value Plain text with encoded special characters.
+	 * @return string
+	 */
+	private static function decode_text( $value ) {
+		if ( function_exists( 'wp_specialchars_decode' ) ) {
+			return wp_specialchars_decode( (string) $value, ENT_QUOTES );
+		}
+
+		return htmlspecialchars_decode( (string) $value, ENT_QUOTES );
 	}
 
 	/**

@@ -254,4 +254,32 @@ class Test_Oli_CSP_Checkout_Notices extends TestCase {
 		$this->assertStringContainsString( "return speak.shipping || 'assertive'", $js );
 		$this->assertStringContainsString( "return speak[area] || 'polite'", $js );
 	}
+
+	/**
+	 * 0.2.7: encoded saved notices reach the block script as literal text.
+	 */
+	public function test_store_api_decodes_saved_entities_to_literal_text() {
+		// What sanitize_textarea_field() stores for "Livraison <24h & retours".
+		$payload = Oli_CSP_Store_API_Integration::format_store_api_notices( array( 'Livraison &lt;24h &amp; retours' ) );
+		$this->assertSame( 'Livraison <24h & retours', $payload['notices'][0]['message'] );
+
+		$payload = Oli_CSP_Store_API_Integration::format_store_api_notices( array( '&lt;24h &amp; 10% off &quot;now&quot; l&#039;offre' ) );
+		$this->assertSame( '<24h & 10% off "now" l\'offre', $payload['notices'][0]['message'] );
+	}
+
+	/**
+	 * 0.2.7: a stored script tag is stripped or stays inert text, never markup.
+	 */
+	public function test_store_api_script_stays_text() {
+		// Raw tag (stripped) and encoded tag (decoded to text the script renders with textContent).
+		$raw = Oli_CSP_Store_API_Integration::format_store_api_notices( array( 'A <script>alert(1)</script> B' ) );
+		$this->assertStringNotContainsString( '<script', $raw['notices'][0]['message'] );
+
+		$encoded = Oli_CSP_Store_API_Integration::format_store_api_notices( array( '&lt;script&gt;alert(1)&lt;/script&gt;' ) );
+		$this->assertSame( '<script>alert(1)</script>', $encoded['notices'][0]['message'] );
+
+		$js = file_get_contents( dirname( __DIR__, 2 ) . '/assets/js/checkout-blocks.js' );
+		$this->assertStringContainsString( 'content.textContent = notice.message', $js );
+		$this->assertDoesNotMatchRegularExpression( '/innerHTML|outerHTML|insertAdjacentHTML|dangerouslySetInnerHTML/', $js );
+	}
 }

@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.7] - 2026-10-27
+
+### Corrigé
+- Checkout en blocs : les avis contenant `<` ou `&` s'affichaient encodés (« &lt;24h &amp; ») dans la bannière et l'annonce lecteur d'écran. Le texte est décodé avec `wp_specialchars_decode( …, ENT_QUOTES )` au moment de l'envoi au script du bloc (données Store API), qui l'affiche via `textContent` / `wp.a11y.speak` (jamais en HTML). Enregistrement et checkout classique inchangés.
+- Tests PHPUnit : « <24h & » rendu en texte littéral côté bloc, et `<script>` qui reste du texte.
+
 ## [0.2.6] - 2026-10-27
 
 ### Security

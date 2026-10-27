@@ -1,11 +1,11 @@
 <?php
 /**
  * Plugin Name: Oli Conditional Shipping and Payments for WooCommerce
- * Plugin URI: https://olivierbigras.com/
+ * Plugin URI: https://github.com/olivierbigras/Oli-Conditional-Shipping-Payments
  * Description: Restrict shipping methods, payment gateways, and shipping destinations based on conditional rules. Supports classic and block checkout, HPOS, and multicurrency.
- * Version: 0.1.2
+ * Version: 0.2.7
  * Author: Olivier Bigras
- * Author URI: https://olivierbigras.com/
+ * Author URI: https://github.com/olivierbigras
  * License: GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: oli-conditional-shipping-payments
@@ -13,6 +13,7 @@
  * Requires at least: 6.5
  * Tested up to: 7.1
  * Requires PHP: 7.4
+ * Requires Plugins: woocommerce
  * WC requires at least: 9.0
  * WC tested up to: 11.2
  *
@@ -22,7 +23,7 @@
 defined( 'ABSPATH' ) || exit;
 
 // Define plugin constants.
-define( 'OLI_CSP_VERSION', '0.1.2' );
+define( 'OLI_CSP_VERSION', '0.2.7' );
 define( 'OLI_CSP_FILE', __FILE__ );
 define( 'OLI_CSP_PATH', plugin_dir_path( __FILE__ ) );
 define( 'OLI_CSP_URL', plugin_dir_url( __FILE__ ) );
@@ -124,6 +125,7 @@ class Oli_CSP_Plugin {
 
 		// Admin classes.
 		if ( is_admin() ) {
+			require_once OLI_CSP_PATH . 'admin/class-oli-csp-admin-rule-ui.php';
 			require_once OLI_CSP_PATH . 'admin/class-oli-csp-admin.php';
 			require_once OLI_CSP_PATH . 'admin/class-oli-csp-admin-settings.php';
 			require_once OLI_CSP_PATH . 'admin/class-oli-csp-admin-product.php';
@@ -153,6 +155,9 @@ class Oli_CSP_Plugin {
 	 * WooCommerce missing notice.
 	 */
 	public function woocommerce_missing_notice() {
+		if ( ! $this->should_display_dependency_notice() ) {
+			return;
+		}
 		?>
 		<div class="notice notice-error">
 			<p>
@@ -174,6 +179,9 @@ class Oli_CSP_Plugin {
 	 * WooCommerce version notice.
 	 */
 	public function woocommerce_version_notice() {
+		if ( ! $this->should_display_dependency_notice() ) {
+			return;
+		}
 		?>
 		<div class="notice notice-error">
 			<p>
@@ -192,11 +200,30 @@ class Oli_CSP_Plugin {
 	}
 
 	/**
-	 * Declare HPOS compatibility.
+	 * Limit dependency notices to the Plugins screen.
+	 *
+	 * @return bool
+	 */
+	private function should_display_dependency_notice() {
+		if ( ! is_admin() || ! function_exists( 'get_current_screen' ) ) {
+			return false;
+		}
+
+		$screen = get_current_screen();
+		if ( ! $screen ) {
+			return false;
+		}
+
+		return in_array( $screen->id, array( 'plugins', 'plugins-network' ), true );
+	}
+
+	/**
+	 * Declare HPOS and checkout-block compatibility.
 	 */
 	public function declare_compatibility() {
 		if ( class_exists( '\Automattic\WooCommerce\Utilities\FeaturesUtil' ) ) {
 			\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', OLI_CSP_FILE, true );
+			\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'cart_checkout_blocks', OLI_CSP_FILE, true );
 		}
 	}
 }

@@ -5,6 +5,77 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.7] - 2026-10-27
+
+### Corrigé
+- Checkout en blocs : les avis contenant `<` ou `&` s'affichaient encodés (« &lt;24h &amp; ») dans la bannière et l'annonce lecteur d'écran. Le texte est décodé avec `wp_specialchars_decode( …, ENT_QUOTES )` au moment de l'envoi au script du bloc (données Store API), qui l'affiche via `textContent` / `wp.a11y.speak` (jamais en HTML). Enregistrement et checkout classique inchangés.
+- Tests PHPUnit : « <24h & » rendu en texte littéral côté bloc, et `<script>` qui reste du texte.
+
+## [0.2.6] - 2026-10-27
+
+### Security
+- Avis de l'écran de réglages (résultat d'import, rapport d'import, erreurs) affichés seulement avec un nonce et la capacité manage_woocommerce
+- Chargement des assets admin : onglet résolu par WooCommerce (global $current_tab) au lieu de lire l'URL
+- Conteneurs d'avis du panier et du checkout classiques échappés à la sortie avec wp_kses() et une liste blanche stricte
+- Export JSON envoyé avec wp_send_json() au lieu d'un echo brut
+- Option « dry run » de l'import lue avec wp_unslash et sanitize_text_field
+- Requête d'import des métas produit : $wpdb->prepare() direct avec le placeholder %i pour la table
+- Règles enregistrées (globales et produit) nettoyées dès la lecture avec map_deep( wp_unslash(), sanitize_textarea_field ) puis sanitize_restriction_data : les listes de codes postaux multi-lignes gardent leurs retours de ligne
+
+## [0.2.5] - 2026-10-26
+
+### Fixed
+- Block checkout no longer uses WooCommerce's notice banner (`createNotice`), which always announces politely and doubled the restriction message
+- Restriction notices render inline in the shipping and payment slots, styled like WooCommerce notices
+- The plugin announces each restriction once with `wp.a11y.speak` after the cart store and shipping rates stay stable for 500 ms, so later WooCommerce speaks cannot clear it. Shipping is assertive; payments stay polite. Classic checkout is unchanged.
+
+## [0.2.4] - 2026-10-26
+
+### Added
+- `== Screenshots ==` captions in readme.txt for the settings, shipping rule, payment rule, and checkout notice screens
+
+### Fixed
+- Block checkout creates restriction notices with `speak: false` so `createNotice` does not double-announce
+- Shipping-area notices are spoken once with `wp.a11y.speak( message, 'assertive' )` so WooCommerce's later polite shipping-options message cannot replace them. Payments stay polite.
+
+## [0.2.3] - 2026-10-26
+
+### Fixed
+- Block checkout restriction notices are announced once to screen readers with `wp.a11y.speak`. Classic checkout styling is unchanged.
+
+## [0.2.2] - 2026-10-26
+
+### Fixed
+- Block checkout shipping notices now use the rendered `wc/checkout/shipping-methods` context (fallback `wc/checkout` when that container is absent). Payments stay on `wc/checkout/payments`.
+
+## [0.2.1] - 2026-10-26
+
+### Fixed
+- Checkout block now shows custom restriction notices through Store API cart extension data and a `core/notices` renderer
+- Classic checkout prints each restriction notice once inside a fragment replaced by `update_order_review`
+- Restriction notices are no longer written to the WooCommerce session, so block requests cannot leak onto classic pages
+
+## [0.2.0] - 2026-10-26
+
+### Added
+- Rules UI under WooCommerce > Settings > Restrictions with AND groups and OR between groups
+- Condition fields for every supported type (cart totals, weight, quantity, catalog, location, customer, coupon)
+- Disable a shipping method type or a specific zone method
+- Per-rule checkout notices on classic checkout and the checkout block
+- Dedicated checkout-notice rules that do not hide methods or gateways
+- Evaluation snapshot API so PHPUnit can cover rule evaluation without WooCommerce
+- Cart/checkout blocks compatibility declaration
+
+### Changed
+- Plugin URI is now the GitHub repository; Author URI is https://github.com/olivierbigras
+- Dependency admin notices appear only on the Plugins screen
+- Location, role, coupon, and catalog conditions honor in / not_in operators
+- PHPCS ruleset uses WordPress-Extra
+- Distributable ZIP includes CHANGELOG.md
+
+### Fixed
+- Empty condition groups no longer make an OR rule match by accident
+
 ## 2026-10-23
 
 ### Modifié
@@ -128,6 +199,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - No external API calls or tracking
 - Clean, documented code following WordPress coding standards
 
+[0.2.5]: https://github.com/olivierbigras/Oli-Conditional-Shipping-Payments/compare/v0.2.4...v0.2.5
+[0.2.4]: https://github.com/olivierbigras/Oli-Conditional-Shipping-Payments/compare/v0.2.3...v0.2.4
+[0.2.3]: https://github.com/olivierbigras/Oli-Conditional-Shipping-Payments/compare/v0.2.2...v0.2.3
+[0.2.2]: https://github.com/olivierbigras/Oli-Conditional-Shipping-Payments/compare/v0.2.1...v0.2.2
+[0.2.1]: https://github.com/olivierbigras/Oli-Conditional-Shipping-Payments/compare/v0.2.0...v0.2.1
+[0.2.0]: https://github.com/olivierbigras/Oli-Conditional-Shipping-Payments/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/olivierbigras/Oli-Conditional-Shipping-Payments/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/olivierbigras/Oli-Conditional-Shipping-Payments/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/olivierbigras/Oli-Conditional-Shipping-Payments/releases/tag/v0.1.0

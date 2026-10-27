@@ -1,0 +1,285 @@
+<?php
+/**
+ * Checkout notice delivery tests (classic fragment + Store API payload).
+ *
+ * @package Oli_Conditional_Shipping_Payments
+ */
+
+use PHPUnit\Framework\TestCase;
+
+/**
+ * Class Test_Oli_CSP_Checkout_Notices
+ */
+class Test_Oli_CSP_Checkout_Notices extends TestCase {
+
+	/**
+	 * Load classes that do not need WordPress at file scope.
+	 */
+	protected function setUp(): void {
+		if ( ! defined( 'ABSPATH' ) ) {
+			define( 'ABSPATH', dirname( __DIR__, 2 ) . '/' );
+		}
+
+		if ( ! class_exists( 'Oli_CSP_Restriction_Handler' ) ) {
+			require_once dirname( __DIR__, 2 ) . '/includes/class-oli-csp-restriction-handler.php';
+		}
+
+		if ( ! class_exists( 'Oli_CSP_Store_API_Integration' ) ) {
+			require_once dirname( __DIR__, 2 ) . '/includes/class-oli-csp-store-api-integration.php';
+		}
+	}
+
+	/**
+	 * Classic notices live in a replaceable container and appear once.
+	 */
+	public function test_classic_container_renders_each_message_once() {
+		$message = 'QA: Flat indisponible pour 100*';
+		$html    = Oli_CSP_Restriction_Handler::build_notice_container_html( array( $message, $message ), 'checkout' );
+
+		$this->assertStringContainsString( 'oli-csp-checkout-notices', $html );
+		$this->assertSame( 1, substr_count( $html, 'class="oli-csp-checkout-notices"' ) );
+		$this->assertSame( 1, substr_count( $html, $message ) );
+		$this->assertSame( 1, substr_count( $html, 'woocommerce-info' ) );
+	}
+
+	/**
+	 * Reloading/rebuilding the container does not accumulate copies.
+	 */
+	public function test_classic_container_rebuild_does_not_duplicate() {
+		$messages = array( 'QA: Flat indisponible pour 100*' );
+		$first    = Oli_CSP_Restriction_Handler::build_notice_container_html( $messages, 'checkout' );
+		$second   = Oli_CSP_Restriction_Handler::build_notice_container_html( $messages, 'checkout' );
+
+		$this->assertSame( $first, $second );
+		$this->assertSame( 1, substr_count( $second, 'QA: Flat indisponible pour 100*' ) );
+	}
+
+	/**
+	 * Classic output is passed through wp_kses() with a whitelist that keeps the container intact.
+	 */
+	public function test_notice_whitelist_keeps_container_markup() {
+		$allowed = Oli_CSP_Restriction_Handler::notice_allowed_html();
+		$this->assertSame( array( 'div' ), array_keys( $allowed ) );
+		$this->assertArrayHasKey( 'class', $allowed['div'] );
+		$this->assertArrayHasKey( 'role', $allowed['div'] );
+
+		if ( ! function_exists( 'wp_kses' ) ) {
+			$this->markTestSkipped( 'wp_kses() requires WordPress.' );
+		}
+
+		$html = Oli_CSP_Restriction_Handler::build_notice_container_html( array( 'Shipping <b>unavailable</b>' ), 'cart' );
+		$this->assertSame( $html, wp_kses( $html, $allowed ) );
+		$this->assertStringNotContainsString( '<script', wp_kses( $html . '<script>x</script>', $allowed ) );
+	}
+
+	/**
+	 * Cart uses a distinct replaceable container.
+	 */
+	public function test_classic_cart_container_class() {
+		$html = Oli_CSP_Restriction_Handler::build_notice_container_html( array( 'Cart notice' ), 'cart' );
+		$this->assertStringContainsString( 'oli-csp-cart-notices', $html );
+		$this->assertStringNotContainsString( 'oli-csp-checkout-notices', $html );
+	}
+
+	/**
+	 * Restriction notices must not be stored in the WooCommerce session.
+	 */
+	public function test_restriction_notices_are_not_session_backed() {
+		$this->assertFalse( Oli_CSP_Restriction_Handler::persist_notices_in_session() );
+		$this->assertFalse( method_exists( 'Oli_CSP_Restriction_Handler', 'maybe_add_runtime_notices' ) );
+		$this->assertFalse( method_exists( 'Oli_CSP_Store_API_Integration', 'add_checkout_notices' ) );
+	}
+
+	/**
+	 * Block checkout reads notices from Store API extension data, not session.
+	 */
+	public function test_store_api_extension_payload_contains_notices() {
+		$payload = Oli_CSP_Store_API_Integration::format_store_api_notices(
+			array(
+				array(
+					'message' => 'QA: Flat indisponible pour 100*',
+					'area'    => 'shipping',
+				),
+				array(
+					'message' => '<strong>QA: COD masqué</strong>',
+					'area'    => 'payment',
+				),
+			)
+		);
+
+		$this->assertArrayHasKey( 'notices', $payload );
+		$this->assertCount( 2, $payload['notices'] );
+		$this->assertSame( 'QA: Flat indisponible pour 100*', $payload['notices'][0]['message'] );
+		$this->assertSame( 'shipping', $payload['notices'][0]['area'] );
+		$this->assertSame( 'QA: COD masqué', $payload['notices'][1]['message'] );
+		$this->assertSame( 'payment', $payload['notices'][1]['area'] );
+		$this->assertStringStartsWith( 'oli-csp-', $payload['notices'][0]['id'] );
+		$this->assertNotSame( $payload['notices'][0]['id'], $payload['notices'][1]['id'] );
+	}
+
+	/**
+	 * Empty Store API payload is a list, never a session write.
+	 */
+	public function test_store_api_extension_payload_empty() {
+		$payload = Oli_CSP_Store_API_Integration::format_store_api_notices( array() );
+		$this->assertSame( array( 'notices' => array() ), $payload );
+	}
+
+	/**
+	 * String notices default to the checkout area.
+	 */
+	public function test_store_api_accepts_plain_strings() {
+		$payload = Oli_CSP_Store_API_Integration::format_store_api_notices( array( 'Hello' ) );
+		$this->assertSame( 'checkout', $payload['notices'][0]['area'] );
+		$this->assertSame( 'Hello', $payload['notices'][0]['message'] );
+	}
+
+	/**
+	 * Shipping notices use wc/checkout/shipping-methods, not wc/checkout/shipping.
+	 */
+	public function test_notice_context_mapping() {
+		$this->assertSame(
+			'wc/checkout/shipping-methods',
+			Oli_CSP_Store_API_Integration::notice_context_for_area( 'shipping' )
+		);
+		$this->assertSame(
+			'wc/checkout/shipping-methods',
+			Oli_CSP_Store_API_Integration::notice_context_for_area(
+				'shipping',
+				array( 'wc/checkout/shipping-methods', 'wc/checkout/payments' )
+			)
+		);
+		$this->assertSame(
+			'wc/checkout',
+			Oli_CSP_Store_API_Integration::notice_context_for_area( 'shipping', array() )
+		);
+		$this->assertSame(
+			'wc/checkout',
+			Oli_CSP_Store_API_Integration::notice_context_for_area(
+				'shipping',
+				array( 'wc/checkout', 'wc/checkout/payments' )
+			)
+		);
+		$this->assertSame(
+			'wc/checkout/payments',
+			Oli_CSP_Store_API_Integration::notice_context_for_area( 'payment' )
+		);
+		$this->assertSame(
+			'wc/checkout/payments',
+			Oli_CSP_Store_API_Integration::notice_context_for_area(
+				'payment',
+				array( 'wc/checkout' )
+			)
+		);
+		$this->assertSame( 'wc/cart', Oli_CSP_Store_API_Integration::notice_context_for_area( 'cart' ) );
+		$this->assertSame( 'wc/checkout', Oli_CSP_Store_API_Integration::notice_context_for_area( 'checkout' ) );
+		$this->assertSame( 'wc/checkout', Oli_CSP_Store_API_Integration::notice_context_for_area( 'unknown' ) );
+	}
+
+	/**
+	 * Block checkout script depends on wp-a11y for screen-reader announcements.
+	 */
+	public function test_block_script_depends_on_wp_a11y() {
+		$deps = Oli_CSP_Store_API_Integration::checkout_script_dependencies( false );
+
+		$this->assertContains( 'wp-a11y', $deps );
+		$this->assertContains( 'wp-data', $deps );
+		$this->assertNotContains( 'wp-notices', $deps );
+		$this->assertNotContains( 'wc-blocks-data-store', $deps );
+	}
+
+	/**
+	 * Speak after the cart store settles; shipping and payment have distinct slots.
+	 */
+	public function test_notice_speak_delay_and_slots() {
+		$this->assertSame( 500, Oli_CSP_Store_API_Integration::notice_speak_delay() );
+		$this->assertContains(
+			'.wp-block-woocommerce-checkout-shipping-methods-block',
+			Oli_CSP_Store_API_Integration::notice_slot_selectors_for_area( 'shipping' )
+		);
+		$this->assertContains(
+			'.wp-block-woocommerce-checkout-payment-block',
+			Oli_CSP_Store_API_Integration::notice_slot_selectors_for_area( 'payment' )
+		);
+	}
+
+	/**
+	 * Block renderer maps shipping to a rendered notice context.
+	 */
+	public function test_block_js_uses_rendered_shipping_notice_context() {
+		$js = file_get_contents( dirname( __DIR__, 2 ) . '/assets/js/checkout-blocks.js' );
+
+		$this->assertNotFalse( $js );
+		$this->assertStringContainsString( "'wc/checkout/shipping-methods'", $js );
+		$this->assertStringContainsString( "'wc/checkout/payments'", $js );
+		$this->assertStringContainsString( "contexts.shippingFallback || 'wc/checkout'", $js );
+		$this->assertDoesNotMatchRegularExpression( "/['\"]wc\\/checkout\\/shipping['\"]/", $js );
+	}
+
+	/**
+	 * Shipping announcements are assertive; other areas stay polite.
+	 */
+	public function test_notice_speak_politeness_mapping() {
+		$this->assertSame( 'assertive', Oli_CSP_Store_API_Integration::notice_speak_politeness_for_area( 'shipping' ) );
+		$this->assertSame( 'polite', Oli_CSP_Store_API_Integration::notice_speak_politeness_for_area( 'payment' ) );
+		$this->assertSame( 'polite', Oli_CSP_Store_API_Integration::notice_speak_politeness_for_area( 'cart' ) );
+		$this->assertSame( 'polite', Oli_CSP_Store_API_Integration::notice_speak_politeness_for_area( 'checkout' ) );
+		$this->assertSame( 'polite', Oli_CSP_Store_API_Integration::notice_speak_politeness_for_area( 'unknown' ) );
+	}
+
+	/**
+	 * Block renderer announces each new notice once and never uses createNotice.
+	 */
+	public function test_block_js_announces_each_notice_once() {
+		$js = file_get_contents( dirname( __DIR__, 2 ) . '/assets/js/checkout-blocks.js' );
+
+		$this->assertNotFalse( $js );
+		$this->assertStringNotContainsString( 'createNotice(', $js );
+		$this->assertStringContainsString( 'oli-csp-inline-notice', $js );
+		$this->assertStringContainsString( 'announceNoticeOnce', $js );
+		$this->assertStringContainsString( 'announcedIds', $js );
+		$this->assertStringContainsString( 'forgetStaleAnnouncements', $js );
+		$this->assertStringContainsString( 'if (!key || !notice.message || announcedIds[key])', $js );
+		$this->assertStringContainsString( 'window.wp.a11y.speak(notice.message, politeness)', $js );
+		$this->assertSame( 1, substr_count( $js, 'wp.a11y.speak(notice.message, politeness)' ) );
+	}
+
+	/**
+	 * Shipping notices use assertive speak so polite shipping-option updates cannot clobber them.
+	 */
+	public function test_block_js_uses_assertive_speak_for_shipping() {
+		$js = file_get_contents( dirname( __DIR__, 2 ) . '/assets/js/checkout-blocks.js' );
+
+		$this->assertNotFalse( $js );
+		$this->assertStringContainsString( "return speak.shipping || 'assertive'", $js );
+		$this->assertStringContainsString( "return speak[area] || 'polite'", $js );
+	}
+
+	/**
+	 * 0.2.7: encoded saved notices reach the block script as literal text.
+	 */
+	public function test_store_api_decodes_saved_entities_to_literal_text() {
+		// What sanitize_textarea_field() stores for "Livraison <24h & retours".
+		$payload = Oli_CSP_Store_API_Integration::format_store_api_notices( array( 'Livraison &lt;24h &amp; retours' ) );
+		$this->assertSame( 'Livraison <24h & retours', $payload['notices'][0]['message'] );
+
+		$payload = Oli_CSP_Store_API_Integration::format_store_api_notices( array( '&lt;24h &amp; 10% off &quot;now&quot; l&#039;offre' ) );
+		$this->assertSame( '<24h & 10% off "now" l\'offre', $payload['notices'][0]['message'] );
+	}
+
+	/**
+	 * 0.2.7: a stored script tag is stripped or stays inert text, never markup.
+	 */
+	public function test_store_api_script_stays_text() {
+		// Raw tag (stripped) and encoded tag (decoded to text the script renders with textContent).
+		$raw = Oli_CSP_Store_API_Integration::format_store_api_notices( array( 'A <script>alert(1)</script> B' ) );
+		$this->assertStringNotContainsString( '<script', $raw['notices'][0]['message'] );
+
+		$encoded = Oli_CSP_Store_API_Integration::format_store_api_notices( array( '&lt;script&gt;alert(1)&lt;/script&gt;' ) );
+		$this->assertSame( '<script>alert(1)</script>', $encoded['notices'][0]['message'] );
+
+		$js = file_get_contents( dirname( __DIR__, 2 ) . '/assets/js/checkout-blocks.js' );
+		$this->assertStringContainsString( 'content.textContent = notice.message', $js );
+		$this->assertDoesNotMatchRegularExpression( '/innerHTML|outerHTML|insertAdjacentHTML|dangerouslySetInnerHTML/', $js );
+	}
+}

@@ -29,5 +29,5 @@ package*.json export-ignore
 .distignore export-ignore
 .gitattributes export-ignore
 
-# Internal markdown docs (keep WordPress.org readme.txt)
-*.md export-ignore
+# Internal markdown docs (keep WordPress.org readme.txt and CHANGELOG.md)
+README.md export-ignore

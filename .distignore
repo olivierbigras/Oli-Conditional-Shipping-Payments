@@ -29,6 +29,8 @@ package*.json
 .gitignore
 .distignore
 .gitattributes
+.phpunit.result.cache
+.phpunit.cache
 
-# Internal markdown docs (keep WordPress.org readme.txt)
-*.md
+# Internal markdown docs (keep WordPress.org readme.txt and CHANGELOG.md)
+README.md

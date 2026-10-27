@@ -4,7 +4,7 @@ Tags: woocommerce, shipping, payment, conditional, restrictions
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 0.1.2
+Stable tag: 0.2.7
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 WC requires at least: 9.0
@@ -32,7 +32,7 @@ Oli Conditional Shipping and Payments for WooCommerce allows you to create power
 
 **Powerful Condition Engine:**
 
-The plugin supports 22 different condition types. Conditions inside a group use AND logic; multiple groups use OR logic:
+The plugin supports 22 different condition types. Build rules in WooCommerce > Settings > Restrictions. Conditions inside a group use AND logic; multiple groups use OR logic:
 
 * Cart Total, Cart Subtotal, Order Total
 * Product in Cart, Category in Cart, Tag in Cart
@@ -104,12 +104,51 @@ No. All rules are stored and evaluated on your site. See the External services s
 
 == Screenshots ==
 
-1. Global restrictions settings page
-2. Shipping method restrictions with conditions
-3. Product-specific restrictions
-4. Import/Export interface
+1. General settings for shipping and payment restrictions.
+2. A shipping rule with its conditions (e.g. hide a method for a postcode pattern).
+3. A payment rule (e.g. hide Cash on delivery above a cart total).
+4. The restriction notice shown to the customer at checkout.
 
 == Changelog ==
+
+= 0.2.7 =
+* Fix: on the checkout block, notices containing < or & were shown encoded (for example "&lt;24h &amp;") in the banner and the screen reader announcement. They are now sent to the block script as plain text, which it renders as text only. Saving and the classic checkout are unchanged.
+
+= 0.2.6 - 2026-10-27 =
+* Security: settings-screen notices (import result, import report, errors) are shown only with a nonce and the manage_woocommerce capability.
+* Security: the admin asset loader uses the settings tab resolved by WooCommerce instead of reading the URL.
+* Classic cart and checkout notice containers are escaped at output with wp_kses() and a strict whitelist.
+* The JSON export is sent with wp_send_json() instead of a raw echo.
+* The import "dry run" flag is unslashed and sanitized.
+* The product meta import query uses $wpdb->prepare() directly with a %i table placeholder.
+* Saved rules (global and per product) are unslashed and sanitized where they are read, with sanitize_textarea_field() so multi-line postcode lists keep their line breaks.
+
+= 0.2.5 - 2026-10-26 =
+* Render checkout-block restriction notices inline instead of WooCommerce's notice banner
+* Announce each restriction once after the cart store settles (assertive for shipping, polite for payments)
+
+= 0.2.4 - 2026-10-26 =
+* Announce each checkout-block notice once (createNotice speak false); shipping uses assertive
+* Add Screenshots section captions for settings, shipping rule, payment rule, and checkout notice
+
+= 0.2.3 - 2026-10-26 =
+* Announce each new checkout-block restriction notice once to screen readers
+
+= 0.2.2 - 2026-10-26 =
+* Show shipping restriction notices on the checkout block in wc/checkout/shipping-methods (fallback wc/checkout)
+
+= 0.2.1 - 2026-10-26 =
+* Show restriction notices on the checkout block via Store API cart extensions
+* Render classic checkout notices once in a replaceable update_order_review fragment
+* Do not store restriction notices in the WooCommerce session
+
+= 0.2.0 - 2026-10-26 =
+* Rules UI under WooCommerce > Settings > Restrictions with AND/OR condition groups
+* Disable shipping methods or zone methods, payment gateways, and destinations
+* Per-rule checkout notices on classic and block checkout
+* Operators for location, role, coupon, and catalog conditions
+* Standalone PHPUnit coverage for rule evaluation
+* Plugin URI and Author URI are now distinct; Author URI is https://github.com/olivierbigras
 
 = 0.1.2 - 2026-10-21 =
 * WordPress.org readiness: External services section, GPLv2 LICENSE, uninstall cleanup
@@ -140,6 +179,30 @@ No. All rules are stored and evaluated on your site. See the External services s
 
 == Upgrade Notice ==
 
+= 0.2.7 =
+Checkout block notices containing < or & now display correctly.
+
+= 0.2.6 =
+Security hardening of admin notices, output escaping, JSON export and the import query. No data changes.
+
+= 0.2.5 =
+Shows checkout-block restriction notices inline and announces each one once after shipping rates settle.
+
+= 0.2.4 =
+Announces each checkout-block restriction notice once. Shipping notices use assertive so they are not overwritten.
+
+= 0.2.3 =
+Announces new checkout-block restriction notices to screen readers once.
+
+= 0.2.2 =
+Shows shipping restriction notices on the checkout block in the shipping-methods notice area.
+
+= 0.2.1 =
+Fixes checkout notices: the block checkout now shows custom restriction messages, and classic checkout no longer duplicates them.
+
+= 0.2.0 =
+Adds the AND/OR rules UI, per-rule checkout notices, and zone-method targeting.
+
 = 0.1.2 =
 WordPress.org readiness: no external services, uninstall cleanup, and safer admin sanitization. Existing oli_csp_* settings are kept.
 
@@ -154,6 +217,11 @@ Initial release of Oli Conditional Shipping and Payments for WooCommerce.
 This plugin does not collect, store, or transmit personal data to any third party. Restriction rules and settings are stored in your WordPress database (`oli_csp_*` options and optional `_oli_csp_restrictions` product meta). Uninstalling the plugin removes those options, the version flag, and product meta.
 
 == Additional Info ==
+
+Author: Olivier Bigras
+Author URI: https://github.com/olivierbigras
+Plugin URI: https://github.com/olivierbigras/Oli-Conditional-Shipping-Payments
+Email: oli@olivierbigras.com
 
 **Compatibility:**
 

@@ -22,6 +22,7 @@ A WordPress plugin to restrict shipping methods, payment gateways, and shipping 
 - Backorders, currency, selected methods/gateways
 - OR logic between condition groups; AND logic within a group
 - Per-zone shipping method restrictions
+- Admin rules UI under WooCommerce > Settings > Restrictions
 
 **Global & Per-Product Restrictions**
 - Set site-wide restrictions
@@ -92,7 +93,6 @@ The plugin can import restrictions from **WooCommerce Conditional Shipping and P
 
 - Restriction scheduling (date/time-based)
 - Customer history conditions (previous orders, lifetime value)
-- Admin UI for editing every condition type (JSON import and the official importer cover the full engine)
 
 See [CHANGELOG.md](CHANGELOG.md) for the roadmap.
 
@@ -109,4 +109,4 @@ GPL v2 or later — see [LICENSE](LICENSE)
 
 ## Credits
 
-Written independently for feature parity with the official WooCommerce extension. Not affiliated with WooCommerce or Automattic.
+Written independently. Not affiliated with WooCommerce.

@@ -18,7 +18,7 @@
 	<config name="minimum_supported_wp_version" value="6.5"/>
 	<config name="testVersion" value="7.4-"/>
 
-	<rule ref="WordPress">
+	<rule ref="WordPress-Extra">
 		<exclude name="Universal.Files.SeparateFunctionsFromOO.Mixed"/>
 	</rule>
 

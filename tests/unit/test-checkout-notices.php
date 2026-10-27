@@ -55,6 +55,24 @@ class Test_Oli_CSP_Checkout_Notices extends TestCase {
 	}
 
 	/**
+	 * Classic output is passed through wp_kses() with a whitelist that keeps the container intact.
+	 */
+	public function test_notice_whitelist_keeps_container_markup() {
+		$allowed = Oli_CSP_Restriction_Handler::notice_allowed_html();
+		$this->assertSame( array( 'div' ), array_keys( $allowed ) );
+		$this->assertArrayHasKey( 'class', $allowed['div'] );
+		$this->assertArrayHasKey( 'role', $allowed['div'] );
+
+		if ( ! function_exists( 'wp_kses' ) ) {
+			$this->markTestSkipped( 'wp_kses() requires WordPress.' );
+		}
+
+		$html = Oli_CSP_Restriction_Handler::build_notice_container_html( array( 'Shipping <b>unavailable</b>' ), 'cart' );
+		$this->assertSame( $html, wp_kses( $html, $allowed ) );
+		$this->assertStringNotContainsString( '<script', wp_kses( $html . '<script>x</script>', $allowed ) );
+	}
+
+	/**
 	 * Cart uses a distinct replaceable container.
 	 */
 	public function test_classic_cart_container_class() {

@@ -399,13 +399,14 @@ class Oli_CSP_Importer {
 		$product_restrictions = array();
 
 		// Find all products with official extension meta.
-		$query = $wpdb->prepare(
-			"SELECT post_id, meta_value FROM {$wpdb->postmeta} WHERE meta_key = %s",
-			self::OFFICIAL_META_KEY
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- one-off import of official meta.
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT post_id, meta_value FROM %i WHERE meta_key = %s',
+				$wpdb->postmeta,
+				self::OFFICIAL_META_KEY
+			)
 		);
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- one-off import of official meta; $query is prepared above.
-		$results = $wpdb->get_results( $query );
 
 		if ( empty( $results ) ) {
 			return $product_restrictions;

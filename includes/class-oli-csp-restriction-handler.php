@@ -217,14 +217,14 @@ class Oli_CSP_Restriction_Handler {
 	 * Render the replaceable cart notice container (classic cart).
 	 */
 	public function render_cart_notice_container() {
-		echo $this->get_notice_container_html( 'cart' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in get_notice_container_html().
+		echo wp_kses( $this->get_notice_container_html( 'cart' ), self::notice_allowed_html() );
 	}
 
 	/**
 	 * Render the replaceable checkout notice container (classic checkout).
 	 */
 	public function render_checkout_notice_container() {
-		echo $this->get_notice_container_html( 'checkout' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in get_notice_container_html().
+		echo wp_kses( $this->get_notice_container_html( 'checkout' ), self::notice_allowed_html() );
 	}
 
 	/**
@@ -283,6 +283,20 @@ class Oli_CSP_Restriction_Handler {
 		$html .= '</div>';
 
 		return $html;
+	}
+
+	/**
+	 * Tags and attributes allowed in the notice container output.
+	 *
+	 * @return array
+	 */
+	public static function notice_allowed_html() {
+		return array(
+			'div' => array(
+				'class' => true,
+				'role'  => true,
+			),
+		);
 	}
 
 	/**

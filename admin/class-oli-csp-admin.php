@@ -105,8 +105,9 @@ class Oli_CSP_Admin {
 		}
 
 		if ( 'woocommerce_page_wc-settings' === $hook ) {
-			$tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			return 'restrictions' === $tab;
+			// WooCommerce resolves the current settings tab on load-woocommerce_page_wc-settings; no request input is read here.
+			global $current_tab;
+			return 'restrictions' === $current_tab;
 		}
 
 		return false;

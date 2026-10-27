@@ -4,7 +4,7 @@ Tags: woocommerce, shipping, payment, conditional, restrictions
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 0.2.5
+Stable tag: 0.2.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 WC requires at least: 9.0
@@ -111,6 +111,14 @@ No. All rules are stored and evaluated on your site. See the External services s
 
 == Changelog ==
 
+= 0.2.6 - 2026-10-27 =
+* Security: settings-screen notices (import result, import report, errors) are shown only with a nonce and the manage_woocommerce capability.
+* Security: the admin asset loader uses the settings tab resolved by WooCommerce instead of reading the URL.
+* Classic cart and checkout notice containers are escaped at output with wp_kses() and a strict whitelist.
+* The JSON export is sent with wp_send_json() instead of a raw echo.
+* The import "dry run" flag is unslashed and sanitized.
+* The product meta import query uses $wpdb->prepare() directly with a %i table placeholder.
+
 = 0.2.5 - 2026-10-26 =
 * Render checkout-block restriction notices inline instead of WooCommerce's notice banner
 * Announce each restriction once after the cart store settles (assertive for shipping, polite for payments)
@@ -166,6 +174,9 @@ No. All rules are stored and evaluated on your site. See the External services s
 * Importer from official WooCommerce extension
 
 == Upgrade Notice ==
+
+= 0.2.6 =
+Security hardening of admin notices, output escaping, JSON export and the import query. No data changes.
 
 = 0.2.5 =
 Shows checkout-block restriction notices inline and announces each one once after shipping rates settle.

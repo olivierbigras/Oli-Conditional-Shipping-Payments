@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.6] - 2026-10-27
+
+### Security
+- Avis de l'écran de réglages (résultat d'import, rapport d'import, erreurs) affichés seulement avec un nonce et la capacité manage_woocommerce
+- Chargement des assets admin : onglet résolu par WooCommerce (global $current_tab) au lieu de lire l'URL
+- Conteneurs d'avis du panier et du checkout classiques échappés à la sortie avec wp_kses() et une liste blanche stricte
+- Export JSON envoyé avec wp_send_json() au lieu d'un echo brut
+- Option « dry run » de l'import lue avec wp_unslash et sanitize_text_field
+- Requête d'import des métas produit : $wpdb->prepare() direct avec le placeholder %i pour la table
+
 ## [0.2.5] - 2026-10-26
 
 ### Fixed

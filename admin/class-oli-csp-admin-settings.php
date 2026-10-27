@@ -61,11 +61,13 @@ class Oli_CSP_Admin_Settings {
 	 * Notices that belong on this plugin screen only.
 	 */
 	private function output_admin_notices() {
-		if ( empty( $_GET['imported'] ) && empty( $_GET['error'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( ! current_user_can( 'manage_woocommerce' )
+			|| ! isset( $_GET['oli_csp_notice_nonce'] )
+			|| ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['oli_csp_notice_nonce'] ) ), 'oli_csp_notice' ) ) {
 			return;
 		}
 
-		$error = isset( $_GET['error'] ) ? sanitize_key( wp_unslash( $_GET['error'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$error = isset( $_GET['error'] ) ? sanitize_key( wp_unslash( $_GET['error'] ) ) : '';
 
 		if ( 'no_file' === $error ) {
 			echo '<div class="notice notice-error"><p>' . esc_html__( 'Please choose a JSON file to import.', 'oli-conditional-shipping-payments' ) . '</p></div>';
@@ -77,7 +79,7 @@ class Oli_CSP_Admin_Settings {
 			return;
 		}
 
-		if ( ! empty( $_GET['imported'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( isset( $_GET['imported'] ) && '1' === sanitize_key( wp_unslash( $_GET['imported'] ) ) ) {
 			echo '<div class="notice notice-success"><p>' . esc_html__( 'Restrictions imported.', 'oli-conditional-shipping-payments' ) . '</p></div>';
 		}
 	}
@@ -86,7 +88,9 @@ class Oli_CSP_Admin_Settings {
 	 * Output the official-extension import report stored in a transient.
 	 */
 	private function output_import_report() {
-		if ( empty( $_GET['import_report'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( ! current_user_can( 'manage_woocommerce' )
+			|| ! isset( $_GET['oli_csp_notice_nonce'], $_GET['import_report'] )
+			|| ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['oli_csp_notice_nonce'] ) ), 'oli_csp_notice' ) ) {
 			return;
 		}
 
@@ -299,14 +303,12 @@ class Oli_CSP_Admin_Settings {
 		}
 
 		$restrictions = get_option( 'oli_csp_global_restrictions', array() );
-		$json         = Oli_CSP_Utils::export_to_json( $restrictions );
 
-		header( 'Content-Type: application/json' );
 		header( 'Content-Disposition: attachment; filename="oli-csp-restrictions-' . gmdate( 'Y-m-d' ) . '.json"' );
 		header( 'Pragma: no-cache' );
 
-		echo $json; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON download body.
-		exit;
+		// wp_send_json() encodes with wp_json_encode(), sends the JSON content type and exits.
+		wp_send_json( $restrictions, null, JSON_PRETTY_PRINT );
 	}
 
 	/**
@@ -324,9 +326,10 @@ class Oli_CSP_Admin_Settings {
 			wp_safe_redirect(
 				add_query_arg(
 					array(
-						'page'  => 'wc-settings',
-						'tab'   => 'restrictions',
-						'error' => 'no_file',
+						'page'                 => 'wc-settings',
+						'tab'                  => 'restrictions',
+						'error'                => 'no_file',
+						'oli_csp_notice_nonce' => wp_create_nonce( 'oli_csp_notice' ),
 					),
 					admin_url( 'admin.php' )
 				)
@@ -339,9 +342,10 @@ class Oli_CSP_Admin_Settings {
 			wp_safe_redirect(
 				add_query_arg(
 					array(
-						'page'  => 'wc-settings',
-						'tab'   => 'restrictions',
-						'error' => 'invalid_json',
+						'page'                 => 'wc-settings',
+						'tab'                  => 'restrictions',
+						'error'                => 'invalid_json',
+						'oli_csp_notice_nonce' => wp_create_nonce( 'oli_csp_notice' ),
 					),
 					admin_url( 'admin.php' )
 				)
@@ -357,9 +361,10 @@ class Oli_CSP_Admin_Settings {
 			wp_safe_redirect(
 				add_query_arg(
 					array(
-						'page'  => 'wc-settings',
-						'tab'   => 'restrictions',
-						'error' => 'invalid_json',
+						'page'                 => 'wc-settings',
+						'tab'                  => 'restrictions',
+						'error'                => 'invalid_json',
+						'oli_csp_notice_nonce' => wp_create_nonce( 'oli_csp_notice' ),
 					),
 					admin_url( 'admin.php' )
 				)
@@ -372,9 +377,10 @@ class Oli_CSP_Admin_Settings {
 		wp_safe_redirect(
 			add_query_arg(
 				array(
-					'page'     => 'wc-settings',
-					'tab'      => 'restrictions',
-					'imported' => '1',
+					'page'                 => 'wc-settings',
+					'tab'                  => 'restrictions',
+					'imported'             => '1',
+					'oli_csp_notice_nonce' => wp_create_nonce( 'oli_csp_notice' ),
 				),
 				admin_url( 'admin.php' )
 			)
@@ -390,7 +396,7 @@ class Oli_CSP_Admin_Settings {
 			wp_die( esc_html__( 'Permission denied.', 'oli-conditional-shipping-payments' ) );
 		}
 
-		$dry_run  = isset( $_POST['dry_run'] ) && '1' === $_POST['dry_run'];
+		$dry_run  = isset( $_POST['dry_run'] ) && '1' === sanitize_text_field( wp_unslash( $_POST['dry_run'] ) );
 		$importer = new Oli_CSP_Importer();
 		$report   = $importer->import_from_official_extension( $dry_run );
 
@@ -399,9 +405,10 @@ class Oli_CSP_Admin_Settings {
 		wp_safe_redirect(
 			add_query_arg(
 				array(
-					'page'          => 'wc-settings',
-					'tab'           => 'restrictions',
-					'import_report' => '1',
+					'page'                 => 'wc-settings',
+					'tab'                  => 'restrictions',
+					'import_report'        => '1',
+					'oli_csp_notice_nonce' => wp_create_nonce( 'oli_csp_notice' ),
 				),
 				admin_url( 'admin.php' )
 			)

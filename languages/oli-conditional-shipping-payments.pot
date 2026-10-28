@@ -2,7 +2,7 @@
 # This file is distributed under the GPL v2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Oli Conditional Shipping and Payments for WooCommerce 0.2.7\n"
+"Project-Id-Version: Oli Conditional Shipping Payments 0.2.8\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/oli-conditional-shipping-payments\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,7 +16,7 @@ msgstr ""
 
 #. Plugin Name of the plugin
 #: oli-conditional-shipping-payments.php
-msgid "Oli Conditional Shipping and Payments for WooCommerce"
+msgid "Oli Conditional Shipping Payments"
 msgstr ""
 
 #. Plugin URI of the plugin
@@ -500,13 +500,13 @@ msgstr ""
 #. translators: %s: WooCommerce plugin link
 #: oli-conditional-shipping-payments.php:168
 #, php-format
-msgid "<strong>Oli Conditional Shipping and Payments</strong> requires WooCommerce to be installed and active. You can download %s here."
+msgid "<strong>Oli Conditional Shipping Payments</strong> requires WooCommerce to be installed and active. You can download %s here."
 msgstr ""
 
 #. translators: %s: Required WooCommerce version
 #: oli-conditional-shipping-payments.php:192
 #, php-format
-msgid "<strong>Oli Conditional Shipping and Payments</strong> requires WooCommerce version %s or higher."
+msgid "<strong>Oli Conditional Shipping Payments</strong> requires WooCommerce version %s or higher."
 msgstr ""
 
 #: oli-conditional-shipping-payments.php:290

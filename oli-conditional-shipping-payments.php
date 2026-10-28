@@ -1,9 +1,9 @@
 <?php
 /**
- * Plugin Name: Oli Conditional Shipping and Payments for WooCommerce
+ * Plugin Name: Oli Conditional Shipping Payments
  * Plugin URI: https://github.com/olivierbigras/Oli-Conditional-Shipping-Payments
  * Description: Restrict shipping methods, payment gateways, and shipping destinations based on conditional rules. Supports classic and block checkout, HPOS, and multicurrency.
- * Version: 0.2.7
+ * Version: 0.2.8
  * Author: Olivier Bigras
  * Author URI: https://github.com/olivierbigras
  * License: GPL v2 or later
@@ -11,7 +11,6 @@
  * Text Domain: oli-conditional-shipping-payments
  * Domain Path: /languages
  * Requires at least: 6.5
- * Tested up to: 7.1
  * Requires PHP: 7.4
  * Requires Plugins: woocommerce
  * WC requires at least: 9.0
@@ -23,7 +22,7 @@
 defined( 'ABSPATH' ) || exit;
 
 // Define plugin constants.
-define( 'OLI_CSP_VERSION', '0.2.7' );
+define( 'OLI_CSP_VERSION', '0.2.8' );
 define( 'OLI_CSP_FILE', __FILE__ );
 define( 'OLI_CSP_PATH', plugin_dir_path( __FILE__ ) );
 define( 'OLI_CSP_URL', plugin_dir_url( __FILE__ ) );
@@ -165,7 +164,7 @@ class Oli_CSP_Plugin {
 				echo wp_kses_post(
 					sprintf(
 						/* translators: %s: WooCommerce plugin link */
-						__( '<strong>Oli Conditional Shipping and Payments</strong> requires WooCommerce to be installed and active. You can download %s here.', 'oli-conditional-shipping-payments' ),
+						__( '<strong>Oli Conditional Shipping Payments</strong> requires WooCommerce to be installed and active. You can download %s here.', 'oli-conditional-shipping-payments' ),
 						'<a href="https://wordpress.org/plugins/woocommerce/" target="_blank">WooCommerce</a>'
 					)
 				);
@@ -189,7 +188,7 @@ class Oli_CSP_Plugin {
 				echo wp_kses_post(
 					sprintf(
 						/* translators: %s: Required WooCommerce version */
-						__( '<strong>Oli Conditional Shipping and Payments</strong> requires WooCommerce version %s or higher.', 'oli-conditional-shipping-payments' ),
+						__( '<strong>Oli Conditional Shipping Payments</strong> requires WooCommerce version %s or higher.', 'oli-conditional-shipping-payments' ),
 						'9.0'
 					)
 				);

@@ -1,10 +1,10 @@
-=== Oli Conditional Shipping and Payments for WooCommerce ===
+=== Oli Conditional Shipping Payments ===
 Contributors: bigrat95
 Tags: woocommerce, shipping, payment, conditional, restrictions
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 0.2.7
+Stable tag: 0.2.8
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 WC requires at least: 9.0
@@ -110,6 +110,9 @@ No. All rules are stored and evaluated on your site. See the External services s
 4. The restriction notice shown to the customer at checkout.
 
 == Changelog ==
+
+= 0.2.8 - 2026-10-28 =
+* Renamed for wp.org slug match; Tested up to only in readme.
 
 = 0.2.7 =
 * Fix: on the checkout block, notices containing < or & were shown encoded (for example "&lt;24h &amp;") in the banner and the screen reader announcement. They are now sent to the block script as plain text, which it renders as text only. Saving and the classic checkout are unchanged.

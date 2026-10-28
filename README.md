@@ -1,4 +1,4 @@
-# Oli Conditional Shipping and Payments for WooCommerce
+# Oli Conditional Shipping Payments
 
 [![CI](https://github.com/olivierbigras/Oli-Conditional-Shipping-Payments/actions/workflows/ci.yml/badge.svg)](https://github.com/olivierbigras/Oli-Conditional-Shipping-Payments/actions)
 [![License: GPL v2](https://img.shields.io/badge/License-GPL%20v2-blue.svg)](https://www.gnu.org/licenses/gpl-2.0)
